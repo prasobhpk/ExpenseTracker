@@ -1,0 +1,1334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<report xmlns="http://www.eclipse.org/birt/2005/design" version="3.2.22" id="1">
+    <property name="createdBy">Eclipse BIRT Designer Version 2.6.1.v20100902 Build &lt;2.6.1.v20100915-1750></property>
+    <property name="units">in</property>
+    <property name="theme">clipsReportLibraryTheme.defaultTheme</property>
+    <property name="layoutPreference">auto layout</property>
+    <list-property name="libraries">
+        <structure>
+            <property name="fileName">reports/clipsReportLibraryTheme.rptlibrary</property>
+            <property name="namespace">clipsReportLibraryTheme</property>
+        </structure>
+    </list-property>
+    <data-sources>
+        <script-data-source name="ClipsDataSource" id="2">
+            <property name="eventHandlerClass">sgcib.clips.reporting.ClipsDataSourceEventHandler</property>
+        </script-data-source>
+    </data-sources>
+    <data-sets>
+        <script-data-set name="EmptyDataSet" id="2322">
+            <structure name="cachedMetaData"/>
+            <property name="dataSource">ClipsDataSource</property>
+        </script-data-set>
+        <script-data-set name="ForexDataSet" id="3193">
+            <property name="eventHandlerClass">sgcib.clips.reporting.custom.ForexCurveDataSetEventHandler</property>
+            <list-property name="resultSetHints">
+                <structure>
+                    <property name="position">0</property>
+                    <property name="name">Currencies</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">1</property>
+                    <property name="name">ForexRate</property>
+                    <property name="dataType">decimal</property>
+                </structure>
+            </list-property>
+            <list-property name="columnHints">
+                <structure>
+                    <property name="columnName">Currencies</property>
+                </structure>
+                <structure>
+                    <property name="columnName">ForexRate</property>
+                </structure>
+            </list-property>
+            <structure name="cachedMetaData">
+                <list-property name="resultSet">
+                    <structure>
+                        <property name="position">1</property>
+                        <property name="name">Currencies</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">2</property>
+                        <property name="name">ForexRate</property>
+                        <property name="dataType">decimal</property>
+                    </structure>
+                </list-property>
+            </structure>
+            <property name="dataSource">ClipsDataSource</property>
+        </script-data-set>
+        <script-data-set name="ForexForPositionsDataSet" id="3390">
+            <property name="eventHandlerClass">sgcib.clips.reporting.custom.ForexRateDataSetEventHandler</property>
+            <list-property name="resultSetHints">
+                <structure>
+                    <property name="position">0</property>
+                    <property name="name">Currencies</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">1</property>
+                    <property name="name">ForexRate</property>
+                    <property name="dataType">decimal</property>
+                </structure>
+            </list-property>
+            <list-property name="columnHints">
+                <structure>
+                    <property name="columnName">Currencies</property>
+                </structure>
+                <structure>
+                    <property name="columnName">ForexRate</property>
+                </structure>
+            </list-property>
+            <structure name="cachedMetaData">
+                <list-property name="resultSet">
+                    <structure>
+                        <property name="position">1</property>
+                        <property name="name">Currencies</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">2</property>
+                        <property name="name">ForexRate</property>
+                        <property name="dataType">decimal</property>
+                    </structure>
+                </list-property>
+            </structure>
+            <property name="dataSource">ClipsDataSource</property>
+        </script-data-set>
+    </data-sets>
+    <styles>
+        <style name="headerWithBlueBackground" id="311">
+            <property name="backgroundColor">#0000CC</property>
+            <property name="backgroundRepeat">no-repeat</property>
+            <property name="fontFamily">"Arial"</property>
+            <property name="fontSize">11pt</property>
+            <property name="fontWeight">bold</property>
+            <property name="color">#FFFFFF</property>
+            <property name="borderBottomStyle">solid</property>
+            <property name="borderBottomWidth">thin</property>
+            <property name="borderLeftStyle">solid</property>
+            <property name="borderLeftWidth">thin</property>
+            <property name="borderRightStyle">solid</property>
+            <property name="borderTopStyle">solid</property>
+            <property name="borderTopWidth">thin</property>
+        </style>
+        <style name="cellStyle" id="312">
+            <property name="fontFamily">sans-serif</property>
+            <property name="fontSize">small</property>
+            <property name="borderBottomStyle">solid</property>
+            <property name="borderBottomWidth">thin</property>
+            <property name="borderLeftStyle">solid</property>
+            <property name="borderLeftWidth">thin</property>
+            <property name="borderRightStyle">solid</property>
+            <property name="borderRightWidth">thin</property>
+            <property name="borderTopStyle">solid</property>
+            <property name="borderTopWidth">thin</property>
+        </style>
+        <style name="DisclaimerTitleStyle" id="387">
+            <property name="fontFamily">sans-serif</property>
+            <property name="fontSize">large</property>
+            <property name="fontWeight">normal</property>
+            <property name="color">#FF0000</property>
+            <property name="borderBottomColor">#FF0000</property>
+            <property name="borderBottomStyle">solid</property>
+            <property name="borderBottomWidth">2pt</property>
+        </style>
+        <style name="disclaimerTextStyle" id="388">
+            <property name="fontFamily">sans-serif</property>
+            <property name="fontSize">x-small</property>
+            <property name="borderBottomColor">#FFFFFF</property>
+            <property name="borderBottomStyle">solid</property>
+            <property name="borderLeftColor">#FFFFFF</property>
+            <property name="borderLeftStyle">solid</property>
+            <property name="borderRightColor">#FFFFFF</property>
+            <property name="borderRightStyle">solid</property>
+            <property name="borderTopColor">#FFFFFF</property>
+            <property name="borderTopStyle">solid</property>
+            <property name="letterSpacing">normal</property>
+        </style>
+        <style name="headerWithLightBlueFontAndBlueBackground" id="502">
+            <property name="color">#80FFFF</property>
+        </style>
+        <style name="headerWithOrangeBackground" id="503">
+            <property name="backgroundColor">#FF8000</property>
+            <property name="fontFamily">"Arial"</property>
+            <property name="fontSize">small</property>
+            <property name="fontWeight">bold</property>
+        </style>
+        <style name="VerticalCenterText" id="732">
+            <property name="verticalAlign">middle</property>
+        </style>
+    </styles>
+    <page-setup>
+        <simple-master-page name="tableLandscapePdfCustom" id="2332">
+            <property name="type">custom</property>
+            <property name="height">210mm</property>
+            <property name="width">297mm</property>
+            <property name="orientation">landscape</property>
+            <property name="leftMargin">0.25in</property>
+            <page-header>
+                <grid id="3504">
+                    <column id="3505"/>
+                    <row id="3506">
+                        <cell id="3507">
+                            <image name="NewImage" id="2507">
+                                <structure name="toc">
+                                    <expression name="expressionValue" type="javascript">reportContext.getGlobalVariable("titlePageTab")</expression>
+                                </structure>
+                                <property name="source">file</property>
+                                <expression name="uri" type="javascript">var myaction=Packages.sgcib.clips.reporting.ActionManager.getCurrentAction();&#13;
+var logo=myaction.getSGLogo();&#13;
+BirtStr.concat("reports/image/logo/", logo)</expression>
+                            </image>
+                        </cell>
+                    </row>
+                    <row id="3508">
+                        <property name="height">20px</property>
+                        <cell id="3509"/>
+                    </row>
+                </grid>
+            </page-header>
+            <page-footer>
+                <grid id="2742">
+                    <column id="2743"/>
+                    <row id="2744">
+                        <cell id="2745">
+                            <property name="textAlign">center</property>
+                            <grid id="2746">
+                                <property name="width">1.2291666666666667in</property>
+                                <column id="2747">
+                                    <property name="width">0.4in</property>
+                                </column>
+                                <column id="2748">
+                                    <property name="width">0.2in</property>
+                                </column>
+                                <column id="2749">
+                                    <property name="width">0.4in</property>
+                                    <property name="textAlign">center</property>
+                                </column>
+                                <row id="2750">
+                                    <cell id="2751">
+                                        <auto-text id="2752">
+                                            <property name="type">page-number</property>
+                                        </auto-text>
+                                    </cell>
+                                    <cell id="2753">
+                                        <text id="2754">
+                                            <property name="contentType">plain</property>
+                                            <text-property name="content"><![CDATA[/]]></text-property>
+                                        </text>
+                                    </cell>
+                                    <cell id="2755">
+                                        <auto-text id="2756">
+                                            <property name="type">total-page</property>
+                                        </auto-text>
+                                    </cell>
+                                </row>
+                            </grid>
+                        </cell>
+                    </row>
+                </grid>
+            </page-footer>
+        </simple-master-page>
+        <simple-master-page name="A4disclaimerPdf" id="2334">
+            <property name="type">a4</property>
+            <property name="orientation">portrait</property>
+            <page-footer>
+                <grid id="2716">
+                    <column id="2717"/>
+                    <row id="2718">
+                        <cell id="2719">
+                            <property name="textAlign">center</property>
+                            <grid id="2720">
+                                <property name="width">1.21875in</property>
+                                <column id="2721">
+                                    <property name="width">0.4in</property>
+                                    <property name="textAlign">center</property>
+                                </column>
+                                <column id="2722">
+                                    <property name="width">0.2in</property>
+                                </column>
+                                <column id="2723">
+                                    <property name="width">0.4in</property>
+                                </column>
+                                <row id="2724">
+                                    <cell id="2725">
+                                        <auto-text id="2726">
+                                            <property name="type">page-number</property>
+                                        </auto-text>
+                                    </cell>
+                                    <cell id="2727">
+                                        <text id="2728">
+                                            <property name="contentType">plain</property>
+                                            <text-property name="content"><![CDATA[/]]></text-property>
+                                        </text>
+                                    </cell>
+                                    <cell id="2729">
+                                        <auto-text id="2730">
+                                            <property name="type">total-page</property>
+                                        </auto-text>
+                                    </cell>
+                                </row>
+                            </grid>
+                        </cell>
+                    </row>
+                </grid>
+            </page-footer>
+        </simple-master-page>
+        <simple-master-page name="A4disclaimerExcel" id="2345">
+            <property name="type">custom</property>
+            <property name="height">10000mm</property>
+            <property name="width">210mm</property>
+            <property name="orientation">portrait</property>
+        </simple-master-page>
+        <simple-master-page name="tableLandscapeExcelCustom" id="2525">
+            <property name="type">custom</property>
+            <property name="height">10000mm</property>
+            <property name="width">297mm</property>
+            <property name="orientation">landscape</property>
+        </simple-master-page>
+        <simple-master-page name="gardeMasterPagePdf" id="3376">
+            <property name="type">a4</property>
+            <property name="orientation">portrait</property>
+            <property name="leftMargin">0.25in</property>
+            <property name="headerHeight">0px</property>
+            <property name="footerHeight">130px</property>
+            <page-footer>
+                <grid name="NewGrid11" id="3377">
+                    <list-property name="visibility">
+                        <structure>
+                            <property name="format">xls</property>
+                            <expression name="valueExpr" type="javascript">true</expression>
+                        </structure>
+                    </list-property>
+                    <column id="3378"/>
+                    <row id="3379">
+                        <cell id="3380">
+                            <text-data name="NewTextData31" id="3381">
+                                <property name="fontFamily">"Arial"</property>
+                                <expression name="valueExpr">var myaction=Packages.sgcib.clips.reporting.ActionManager.getCurrentAction();myaction.getFooter();</expression>
+                                <property name="contentType">html</property>
+                            </text-data>
+                        </cell>
+                    </row>
+                    <row id="3382">
+                        <property name="textAlign">center</property>
+                        <cell id="3383">
+                            <grid name="NewGrid21" id="3384">
+                                <property name="width">1.21875in</property>
+                                <column id="3385">
+                                    <property name="width">0.4in</property>
+                                </column>
+                                <column id="3386">
+                                    <property name="width">0.2in</property>
+                                </column>
+                                <column id="3387">
+                                    <property name="width">0.4in</property>
+                                </column>
+                                <row id="3388">
+                                    <cell id="3389">
+                                        <auto-text name="NewAutoText2" id="3429">
+                                            <property name="type">page-number</property>
+                                        </auto-text>
+                                    </cell>
+                                    <cell id="3391">
+                                        <text name="NewText41" id="3392">
+                                            <property name="contentType">plain</property>
+                                            <text-property name="content"><![CDATA[/]]></text-property>
+                                        </text>
+                                    </cell>
+                                    <cell id="3393">
+                                        <auto-text name="NewAutoText11" id="3394">
+                                            <property name="type">total-page</property>
+                                        </auto-text>
+                                    </cell>
+                                </row>
+                            </grid>
+                        </cell>
+                    </row>
+                </grid>
+            </page-footer>
+        </simple-master-page>
+        <simple-master-page name="gardeMasterPageExcel" id="3395">
+            <property name="type">custom</property>
+            <property name="height">297in</property>
+            <property name="width">850px</property>
+            <property name="orientation">portrait</property>
+            <property name="headerHeight">0px</property>
+            <property name="footerHeight">130px</property>
+            <page-footer>
+                <text-data name="NewTextData321" id="3396">
+                    <property name="fontFamily">"Arial"</property>
+                    <expression name="valueExpr">var myaction=Packages.sgcib.clips.reporting.ActionManager.getCurrentAction();myaction.getFooter();</expression>
+                    <property name="contentType">html</property>
+                </text-data>
+            </page-footer>
+        </simple-master-page>
+        <simple-master-page name="tableLandscapeExcelCustomWithLogo" id="3464">
+            <property name="type">custom</property>
+            <property name="height">10000mm</property>
+            <property name="width">297mm</property>
+            <property name="orientation">landscape</property>
+            <property name="leftMargin">0.25in</property>
+            <page-header>
+                <image name="NewImage3" id="3465">
+                    <property name="width">110mm</property>
+                    <structure name="toc">
+                        <expression name="expressionValue" type="javascript">reportContext.getGlobalVariable("titlePageTab")</expression>
+                    </structure>
+                    <property name="source">file</property>
+                    <expression name="uri" type="javascript">var myaction=Packages.sgcib.clips.reporting.ActionManager.getCurrentAction();&#13;
+var logo=myaction.getSGLogo();&#13;
+BirtStr.concat("reports/image/logo/", logo)</expression>
+                </image>
+            </page-header>
+        </simple-master-page>
+    </page-setup>
+    <body>
+        <table id="2757">
+            <property name="dataSet">EmptyDataSet</property>
+            <list-property name="visibility">
+                <structure>
+                    <property name="format">all</property>
+                    <expression name="valueExpr" type="javascript">true</expression>
+                </structure>
+            </list-property>
+            <column id="2764"/>
+            <header>
+                <row id="2758">
+                    <cell id="2759"/>
+                </row>
+            </header>
+            <detail>
+                <row id="2760">
+                    <cell id="2761"/>
+                </row>
+            </detail>
+            <footer>
+                <row id="2762">
+                    <cell id="2763"/>
+                </row>
+            </footer>
+        </table>
+        <grid name="firstPageHeader1" id="611">
+            <property name="pageBreakAfter">auto</property>
+            <property name="height">2.96875in</property>
+            <property name="width">7.65625in</property>
+            <list-property name="visibility">
+                <structure>
+                    <property name="format">all</property>
+                    <expression name="valueExpr" type="javascript">vars["action"].isInternalReport()==true</expression>
+                </structure>
+            </list-property>
+            <method name="onRender"><![CDATA[reportContext.setPageVariable(reportContext.PAGE_VAR_PAGE_LABEL, reportContext.getGlobalVariable("titlePageTab"))
+
+if( reportContext.getOutputFormat() == "pdf" ){
+	this.getStyle().masterPage = "gardeMasterPagePdf" ;
+} else if( reportContext.getOutputFormat() == "xls" ){
+	this.getStyle().masterPage = "gardeMasterPageExcel";
+}]]></method>
+            <column id="612">
+                <property name="width">0.20833333333333334in</property>
+            </column>
+            <column id="613">
+                <property name="width">0.6666666666666666in</property>
+            </column>
+            <column id="614">
+                <property name="width">700px</property>
+            </column>
+            <row id="2369">
+                <property name="height">0.23958333333333334in</property>
+                <cell id="2370">
+                    <property name="colSpan">3</property>
+                    <property name="rowSpan">1</property>
+                    <image name="NewImage2" id="3371">
+                        <structure name="toc">
+                            <expression name="expressionValue" type="javascript">reportContext.getGlobalVariable("titlePageTab")</expression>
+                        </structure>
+                        <property name="source">file</property>
+                        <expression name="uri" type="javascript">var myaction=Packages.sgcib.clips.reporting.ActionManager.getCurrentAction();&#13;
+var logo=myaction.getSGLogo();&#13;
+BirtStr.concat("reports/image/logo/", logo)</expression>
+                    </image>
+                </cell>
+            </row>
+            <row id="2358">
+                <property name="height">0.23958333333333334in</property>
+                <cell id="2359"/>
+                <cell id="2360"/>
+                <cell id="2361"/>
+            </row>
+            <row id="2335">
+                <property name="height">0.23958333333333334in</property>
+                <cell id="2336"/>
+                <cell id="2337"/>
+                <cell id="2338"/>
+            </row>
+            <row id="3372">
+                <property name="height">0.23958333333333334in</property>
+                <cell id="3373"/>
+                <cell id="3374"/>
+                <cell id="3375"/>
+            </row>
+            <row id="655">
+                <property name="height">0.23958333333333334in</property>
+                <cell id="656"/>
+                <cell id="657"/>
+                <cell id="658"/>
+            </row>
+            <row id="666">
+                <cell id="667">
+                    <property name="colSpan">2</property>
+                    <property name="rowSpan">1</property>
+                    <text-data name="NewText" id="668">
+                        <property name="style">gardeDateLabel</property>
+                        <expression name="valueExpr">vars["messages"].get("dateLabel");</expression>
+                        <property name="contentType">plain</property>
+                    </text-data>
+                </cell>
+                <cell id="669">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <property name="style">gardeDateValue</property>
+                    <text-data name="NewTextData" id="670">
+                        <property name="style">gardeDateValue</property>
+                        <expression name="valueExpr">vars["action"].getCreationDate()</expression>
+                        <property name="contentType">plain</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="671">
+                <property name="height">0.5104166666666666in</property>
+                <cell id="672">
+                    <property name="colSpan">2</property>
+                    <property name="rowSpan">1</property>
+                    <text-data name="NewText1" id="673">
+                        <property name="style">gardeSubjectLabel</property>
+                        <expression name="valueExpr">vars["messages"].get("subjectLabel");</expression>
+                        <property name="contentType">plain</property>
+                    </text-data>
+                </cell>
+                <cell id="674">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <text-data name="NewTextData1" id="675">
+                        <property name="style">gardeSubjectValue</property>
+                        <expression name="valueExpr">vars["action"].getReportTitle();</expression>
+                        <property name="contentType">plain</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="676">
+                <property name="height">0.65625in</property>
+                <cell id="677">
+                    <property name="colSpan">2</property>
+                    <property name="rowSpan">1</property>
+                    <property name="style">gardeLine</property>
+                    <text-data name="NewText2" id="678">
+                        <property name="style">gardeFrequencyLabel</property>
+                        <expression name="valueExpr">vars["messages"].get("frequencyLabel");</expression>
+                        <property name="contentType">plain</property>
+                    </text-data>
+                </cell>
+                <cell id="679">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <property name="style">gardeLine</property>
+                    <text-data name="NewTextData2" id="680">
+                        <property name="style">gardeFrequencyValue</property>
+                        <expression name="valueExpr">var schedulingName = vars["action"].getSchedulingLabel(); &#13;
+var schedulingLabel = vars["messages"].get(schedulingName, "SCHEDULE");&#13;
+vars["messages"].format("schedulingLabel", schedulingLabel);</expression>
+                        <property name="contentType">plain</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="2508">
+                <property name="height">1.073in</property>
+                <cell id="2509"/>
+                <cell id="2510"/>
+                <cell id="2511"/>
+            </row>
+            <row id="2519">
+                <cell id="2520">
+                    <property name="colSpan">3</property>
+                    <property name="rowSpan">1</property>
+                    <text-data name="NewTextData9" id="2530">
+                        <property name="fontFamily">"Arial"</property>
+                        <expression name="valueExpr">vars["messages"].get(vars["mtmType"], vars["action"].getCarefullyInformationKey());</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+        </grid>
+        <table id="2323">
+            <property name="pageBreakAfter">always</property>
+            <property name="dataSet">EmptyDataSet</property>
+            <list-property name="visibility">
+                <structure>
+                    <property name="format">all</property>
+                    <expression name="valueExpr" type="javascript">vars["action"].isInternalReport()==true</expression>
+                </structure>
+            </list-property>
+            <column id="2330"/>
+            <header>
+                <row id="2324">
+                    <cell id="2325"/>
+                </row>
+            </header>
+            <detail>
+                <row id="2326">
+                    <cell id="2327"/>
+                </row>
+            </detail>
+            <footer>
+                <row id="2328">
+                    <cell id="2329"/>
+                </row>
+            </footer>
+        </table>
+        <grid name="disclaimer1" id="379">
+            <property name="pageBreakAfter">always</property>
+            <property name="width">100%</property>
+            <list-property name="visibility">
+                <structure>
+                    <property name="format">all</property>
+                    <expression name="valueExpr" type="javascript">vars["action"].isInternalReport()==true</expression>
+                </structure>
+            </list-property>
+            <structure name="toc">
+                <expression name="expressionValue" type="javascript">reportContext.getGlobalVariable("importantInformationTab")</expression>
+            </structure>
+            <method name="onRender"><![CDATA[reportContext.setPageVariable(reportContext.PAGE_VAR_PAGE_LABEL, reportContext.getGlobalVariable("importantInformationTab"))
+
+if( reportContext.getOutputFormat() == "pdf" ){
+	this.getStyle().masterPage = "A4disclaimerPdf" ;
+} else if( reportContext.getOutputFormat() == "xls" ){
+	this.getStyle().masterPage = "A4disclaimerExcel";
+}]]></method>
+            <column id="380"/>
+            <row id="609">
+                <property name="height">25pt</property>
+                <cell id="610"/>
+            </row>
+            <row id="381">
+                <property name="height">25pt</property>
+                <cell id="382">
+                    <text-data name="NewTextData7" id="386">
+                        <property name="style">disclaimer</property>
+                        <expression name="valueExpr">var myaction=Packages.sgcib.clips.reporting.ActionManager.getCurrentAction();myaction.getDisclaimerTitle();</expression>
+                        <property name="contentType">plain</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="383">
+                <cell id="384">
+                    <text-data name="NewTextData8" id="410">
+                        <property name="fontFamily">"Arial"</property>
+                        <property name="fontSize">8pt</property>
+                        <property name="textAlign">justify</property>
+                        <property name="pageBreakAfter">always</property>
+                        <expression name="valueExpr">var myaction=Packages.sgcib.clips.reporting.ActionManager.getCurrentAction();myaction.getDisclaimerText();</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+        </grid>
+        <grid name="Valuation" id="6">
+            <property name="pageBreakAfter">always</property>
+            <structure name="toc">
+                <expression name="expressionValue" type="javascript">reportContext.getGlobalVariable("positionTab")</expression>
+            </structure>
+            <method name="onRender"><![CDATA[reportContext.setPageVariable(reportContext.PAGE_VAR_PAGE_LABEL, reportContext.getGlobalVariable("positionTab"))
+
+if( reportContext.getOutputFormat() == "pdf" ){
+	this.getStyle().masterPage = "tableLandscapePdfCustom" ;
+} else if( reportContext.getOutputFormat() == "xls" ){
+	if(vars["action"].displayLogoOnValuationExcelSheet()){
+		this.getStyle().masterPage = "tableLandscapeExcelCustomWithLogo" ;		
+	}else{
+		this.getStyle().masterPage = "tableLandscapeExcelCustom" ;
+	}
+}]]></method>
+            <column id="8">
+                <property name="width">100%</property>
+                <property name="whiteSpace">normal</property>
+            </column>
+            <row id="9">
+                <cell id="10">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <text-data id="3091">
+                        <property name="style">valuationTitle</property>
+                        <expression name="valueExpr">vars["messages"].get("valuationTitle", vars["themeName"]);</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="3049">
+                <property name="height">5px</property>
+                <cell id="3050">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <property name="style">valuationLine</property>
+                </cell>
+            </row>
+            <row id="3055">
+                <property name="height">20px</property>
+                <cell id="3056">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <text-data id="3519">
+                        <property name="color">red</property>
+                        <property name="textAlign">right</property>
+                        <list-property name="visibility">
+                            <structure>
+                                <property name="format">all</property>
+                                <expression name="valueExpr" type="javascript">vars["action"].isInternalReport()!=true</expression>
+                            </structure>
+                        </list-property>
+                        <expression name="valueExpr">vars["messages"].get("internalReportDisclaimer");</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="3052">
+                <cell id="3053">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <text-data id="3092">
+                        <property name="style">valuationFromYourPerspective</property>
+                        <list-property name="visibility">
+                            <structure>
+                                <property name="format">all</property>
+                                <expression name="valueExpr" type="javascript">vars["action"].hideValuationFromYourPerspectiveOnValuationPart()</expression>
+                            </structure>
+                        </list-property>
+                        <expression name="valueExpr">vars["messages"].get("valuationFromYourPerspective", vars["themeName"].concat(vars["action"].getValuationPerspectiveForIR()))</expression>
+                        <property name="contentType">plain</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="3058">
+                <property name="height">20px</property>
+                <cell id="3059">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                </cell>
+            </row>
+            <row id="3061">
+                <property name="style">infoPart</property>
+                <cell id="3062">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <grid name="clientGrid" id="3069">
+                        <property name="width">100%</property>
+                        <structure name="toc"/>
+                        <column id="3070"/>
+                        <column id="3071"/>
+                        <row id="3072">
+                            <list-property name="visibility">
+                                <structure>
+                                    <property name="format">all</property>
+                                    <expression name="valueExpr" type="javascript">vars["action"].hideClientPartOnValuationPart()</expression>
+                                </structure>
+                            </list-property>
+                            <cell id="3073">
+                                <text-data id="3093">
+                                    <property name="style">infoLabel</property>
+                                    <expression name="valueExpr">vars["messages"].get("clientLabel")</expression>
+                                    <property name="contentType">plain</property>
+                                </text-data>
+                            </cell>
+                            <cell id="3074">
+                                <text-data id="3095">
+                                    <property name="style">infoValue</property>
+                                    <expression name="valueExpr">vars["action"].getClientName();</expression>
+                                    <property name="contentType">plain</property>
+                                </text-data>
+                            </cell>
+                        </row>
+                        <row id="3088">
+                            <list-property name="visibility">
+                                <structure>
+                                    <property name="format">all</property>
+                                    <expression name="valueExpr" type="javascript">vars["action"].hideValuationDatePartOnValuationPart()</expression>
+                                </structure>
+                            </list-property>
+                            <cell id="3089">
+                                <text-data id="3094">
+                                    <property name="style">infoLabel</property>
+                                    <expression name="valueExpr">vars["messages"].get("valuationDateLabel")</expression>
+                                    <property name="contentType">plain</property>
+                                </text-data>
+                            </cell>
+                            <cell id="3090">
+                                <text-data id="3096">
+                                    <property name="style">infoValueValoDate</property>
+                                    <expression name="valueExpr">vars["action"].getFormattedValuationDate();</expression>
+                                    <property name="contentType">plain</property>
+                                </text-data>
+                            </cell>
+                        </row>
+                    </grid>
+                </cell>
+            </row>
+            <row id="3085">
+                <method name="onRender"><![CDATA[if(vars["action"].hideMidMtmDfaDefinition()==false &amp;&amp; vars["action"].hideMidDfaDefinition()==false){
+	this.height='70px';
+} else if(vars["action"].hideMidMtmDfaDefinition()==false || vars["action"].hideMidDfaDefinition()==false) {
+	this.height='50px';
+}else{
+	this.height='20px';
+}
+]]></method>
+                <property name="verticalAlign">middle</property>
+                <cell id="3086">
+                    <property name="paddingTop">1pt</property>
+                    <property name="paddingLeft">1pt</property>
+                    <property name="paddingBottom">1pt</property>
+                    <property name="paddingRight">1pt</property>
+                    <text-data id="3512">
+                        <property name="textAlign">right</property>
+                        <property name="verticalAlign">middle</property>
+                        <list-property name="visibility">
+                            <structure>
+                                <property name="format">all</property>
+                                <expression name="valueExpr" type="javascript">vars["action"].hideMidMtmDfaDefinition()</expression>
+                            </structure>
+                        </list-property>
+                        <expression name="valueExpr">vars["messages"].get("midMtmDfaDefinition")</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                    <text-data id="3513">
+                        <property name="textAlign">right</property>
+                        <property name="verticalAlign">middle</property>
+                        <list-property name="visibility">
+                            <structure>
+                                <property name="format">all</property>
+                                <expression name="valueExpr" type="javascript">vars["action"].hideMidDfaDefinition()</expression>
+                            </structure>
+                        </list-property>
+                        <expression name="valueExpr">vars["messages"].get("midDfaDefinition")</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="3466">
+                <property name="paddingTop">0pt</property>
+                <property name="paddingLeft">0pt</property>
+                <property name="paddingBottom">0pt</property>
+                <property name="paddingRight">0pt</property>
+                <cell id="3467">
+                    <property name="width">71px</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <property name="verticalAlign">middle</property>
+                </cell>
+            </row>
+            <row id="508">
+                <property name="height">20px</property>
+                <property name="paddingTop">0pt</property>
+                <property name="paddingLeft">0pt</property>
+                <property name="paddingBottom">0pt</property>
+                <property name="paddingRight">0pt</property>
+                <list-property name="visibility">
+                    <structure>
+                        <property name="format">all</property>
+                        <expression name="valueExpr" type="javascript">reportContext.getGlobalVariable("showForexUsed")==false</expression>
+                    </structure>
+                </list-property>
+                <cell id="510">
+                    <property name="width">71px</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <property name="verticalAlign">middle</property>
+                </cell>
+            </row>
+            <row id="3470">
+                <property name="paddingTop">0pt</property>
+                <property name="paddingLeft">0pt</property>
+                <property name="paddingBottom">0pt</property>
+                <property name="paddingRight">0pt</property>
+                <list-property name="visibility">
+                    <structure>
+                        <property name="format">all</property>
+                        <expression name="valueExpr" type="javascript">reportContext.getGlobalVariable("showForexUsed")==false</expression>
+                    </structure>
+                </list-property>
+                <cell id="3471">
+                    <property name="width">71px</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <property name="verticalAlign">middle</property>
+                </cell>
+            </row>
+            <row id="3468">
+                <property name="paddingTop">0pt</property>
+                <property name="paddingLeft">0pt</property>
+                <property name="paddingBottom">0pt</property>
+                <property name="paddingRight">0pt</property>
+                <list-property name="visibility">
+                    <structure>
+                        <property name="format">all</property>
+                        <expression name="valueExpr" type="javascript">reportContext.getGlobalVariable("showForexUsed")==false</expression>
+                    </structure>
+                </list-property>
+                <cell id="3469">
+                    <property name="width">71px</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <property name="verticalAlign">middle</property>
+                    <table name="forexRateTable" id="3402">
+                        <property name="dataSet">ForexForPositionsDataSet</property>
+                        <list-property name="visibility">
+                            <structure>
+                                <property name="format">all</property>
+                                <expression name="valueExpr" type="javascript">reportContext.getGlobalVariable("showForexUsed")==false</expression>
+                            </structure>
+                        </list-property>
+                        <list-property name="boundDataColumns">
+                            <structure>
+                                <property name="name">Currencies</property>
+                                <text-property name="displayName">Currencies</text-property>
+                                <expression name="expression" type="javascript">dataSetRow["Currencies"]</expression>
+                                <property name="dataType">string</property>
+                            </structure>
+                            <structure>
+                                <property name="name">ForexRate</property>
+                                <text-property name="displayName">ForexRate</text-property>
+                                <expression name="expression" type="javascript">dataSetRow["ForexRate"]</expression>
+                                <property name="dataType">decimal</property>
+                            </structure>
+                        </list-property>
+                        <column id="3403"/>
+                        <column id="3404"/>
+                        <header>
+                            <row id="3405">
+                                <cell id="3406">
+                                    <text-data id="3421">
+                                        <property name="fontFamily">"Arial"</property>
+                                        <property name="fontWeight">bold</property>
+                                        <property name="textAlign">left</property>
+                                        <expression name="valueExpr">vars["messages"].get("forexTableLabel")</expression>
+                                        <property name="contentType">plain</property>
+                                    </text-data>
+                                </cell>
+                                <cell id="3408"/>
+                            </row>
+                        </header>
+                        <detail>
+                            <row id="3409">
+                                <property name="textAlign">left</property>
+                                <cell id="3410">
+                                    <data id="3411">
+                                        <property name="fontFamily">"Arial"</property>
+                                        <property name="fontWeight">bold</property>
+                                        <property name="whiteSpace">nowrap</property>
+                                        <property name="resultSetColumn">Currencies</property>
+                                    </data>
+                                </cell>
+                                <cell id="3412">
+                                    <data id="3413">
+                                        <property name="fontFamily">"Arial"</property>
+                                        <structure name="numberFormat">
+                                            <property name="category">Unformatted</property>
+                                        </structure>
+                                        <property name="textAlign">right</property>
+                                        <property name="whiteSpace">nowrap</property>
+                                        <property name="resultSetColumn">ForexRate</property>
+                                    </data>
+                                </cell>
+                            </row>
+                        </detail>
+                    </table>
+                </cell>
+            </row>
+            <row id="3445">
+                <list-property name="visibility">
+                    <structure>
+                        <property name="format">all</property>
+                        <expression name="valueExpr" type="javascript">vars["action"].hideSgValuationLinkOnValuationPart()</expression>
+                    </structure>
+                </list-property>
+                <cell id="3446">
+                    <property name="width">71px</property>
+                    <property name="verticalAlign">middle</property>
+                </cell>
+            </row>
+            <row id="3443">
+                <list-property name="visibility">
+                    <structure>
+                        <property name="format">all</property>
+                        <expression name="valueExpr" type="javascript">vars["action"].hideSgValuationLinkOnValuationPart()</expression>
+                    </structure>
+                </list-property>
+                <cell id="3444">
+                    <property name="width">71px</property>
+                    <property name="verticalAlign">middle</property>
+                </cell>
+            </row>
+            <row id="3440">
+                <property name="backgroundColor">#D8D8D8</property>
+                <list-property name="visibility">
+                    <structure>
+                        <property name="format">all</property>
+                        <expression name="valueExpr" type="javascript">vars["action"].hideSgValuationLinkOnValuationPart()</expression>
+                    </structure>
+                </list-property>
+                <cell id="3441">
+                    <property name="width">71px</property>
+                    <property name="verticalAlign">middle</property>
+                    <label id="3442">
+                        <property name="fontFamily">"Arial"</property>
+                        <property name="fontWeight">bold</property>
+                        <property name="color">#996633</property>
+                        <property name="textAlign">center</property>
+                        <method name="onRender"><![CDATA[this.text=vars["messages"].get("moreInformation")]]></method>
+                        <text-property name="text"></text-property>
+                        <list-property name="action">
+                            <structure>
+                                <property name="linkType">hyperlink</property>
+                                <expression name="uri" type="constant">http://www.valuation.socgen.com/</expression>
+                                <property name="targetWindow">_blank</property>
+                            </structure>
+                        </list-property>
+                    </label>
+                </cell>
+            </row>
+            <row id="3472">
+                <list-property name="visibility">
+                    <structure>
+                        <property name="format">all</property>
+                        <expression name="valueExpr" type="javascript">vars["action"].hideBlankLineAfterForexTableOnValuationPart()</expression>
+                    </structure>
+                </list-property>
+                <cell id="3473">
+                    <property name="width">71px</property>
+                    <property name="verticalAlign">middle</property>
+                </cell>
+            </row>
+            <row id="3474">
+                <list-property name="visibility">
+                    <structure>
+                        <property name="format">all</property>
+                        <expression name="valueExpr" type="javascript">vars["action"].hideBlankLineAfterForexTableOnValuationPart()</expression>
+                    </structure>
+                </list-property>
+                <cell id="3475">
+                    <property name="width">71px</property>
+                    <property name="verticalAlign">middle</property>
+                </cell>
+            </row>
+            <row id="3476">
+                <list-property name="visibility">
+                    <structure>
+                        <property name="format">all</property>
+                        <expression name="valueExpr" type="javascript">vars["action"].hideBlankLineAfterForexTableOnValuationPart()</expression>
+                    </structure>
+                </list-property>
+                <cell id="3477">
+                    <property name="width">71px</property>
+                    <property name="verticalAlign">middle</property>
+                </cell>
+            </row>
+            <row id="3478">
+                <property name="borderBottomColor">#996633</property>
+                <property name="borderBottomStyle">solid</property>
+                <property name="borderBottomWidth">1px</property>
+                <list-property name="visibility">
+                    <structure>
+                        <property name="format">all</property>
+                        <expression name="valueExpr" type="javascript">vars["action"].hideDoNotHesitateToContactMessageOnValuationPart()</expression>
+                    </structure>
+                </list-property>
+                <cell id="3479">
+                    <property name="width">71px</property>
+                    <property name="verticalAlign">middle</property>
+                    <text-data id="3482">
+                        <property name="fontFamily">"Arial"</property>
+                        <property name="color">#996633</property>
+                        <property name="textAlign">center</property>
+                        <expression name="valueExpr">vars["action"].getDoNotHesitateToContactMessage()</expression>
+                        <property name="contentType">plain</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="3480">
+                <list-property name="visibility">
+                    <structure>
+                        <property name="format">all</property>
+                        <expression name="valueExpr" type="javascript">vars["action"].hideDoNotHesitateToContactMessageInBlackOnValuationPart()</expression>
+                    </structure>
+                </list-property>
+                <cell id="3481">
+                    <property name="width">71px</property>
+                    <property name="verticalAlign">middle</property>
+                    <text-data id="3483">
+                        <property name="fontFamily">"Arial"</property>
+                        <expression name="valueExpr">vars["action"].getDoNotHesitateToContactMessage()</expression>
+                        <property name="contentType">plain</property>
+                    </text-data>
+                </cell>
+            </row>
+        </grid>
+        <grid name="Forex Table" id="3145">
+            <property name="pageBreakAfter">always</property>
+            <property name="pageBreakBefore">auto</property>
+            <property name="width">400px</property>
+            <list-property name="visibility">
+                <structure>
+                    <property name="format">all</property>
+                    <expression name="valueExpr" type="javascript">vars["action"].isIncludeForexTable()==false</expression>
+                </structure>
+            </list-property>
+            <structure name="toc">
+                <expression name="expressionValue" type="javascript">reportContext.getGlobalVariable("forexTableTab")</expression>
+            </structure>
+            <method name="onRender"><![CDATA[reportContext.setPageVariable(reportContext.PAGE_VAR_PAGE_LABEL, reportContext.getGlobalVariable("forexTableTab"))
+
+if( reportContext.getOutputFormat() == "pdf" ){
+	this.getStyle().masterPage = "tableLandscapePdfCustom" ;
+} else if( reportContext.getOutputFormat() == "xls" ){
+	this.getStyle().masterPage = "tableLandscapeExcelCustomWithLogo" ;
+}]]></method>
+            <column id="3146"/>
+            <row id="3488">
+                <property name="height">30px</property>
+                <cell id="3489"/>
+            </row>
+            <row id="3233">
+                <cell id="3234">
+                    <text-data id="3237">
+                        <property name="style">valuationTitle</property>
+                        <expression name="valueExpr" type="javascript">vars["messages"].get("forexTableLabel") + "   "+vars["action"].getFormattedValuationDate()</expression>
+                        <property name="contentType">plain</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="3490">
+                <property name="height">20px</property>
+                <cell id="3491"/>
+            </row>
+            <row id="3149">
+                <cell id="3150">
+                    <table id="3221">
+                        <property name="dataSet">ForexDataSet</property>
+                        <list-property name="boundDataColumns">
+                            <structure>
+                                <property name="name">Currencies</property>
+                                <text-property name="displayName">Currencies</text-property>
+                                <expression name="expression" type="javascript">dataSetRow["Currencies"]</expression>
+                                <property name="dataType">string</property>
+                            </structure>
+                            <structure>
+                                <property name="name">ForexRate</property>
+                                <text-property name="displayName">ForexRate</text-property>
+                                <expression name="expression" type="javascript">dataSetRow["ForexRate"]</expression>
+                                <property name="dataType">decimal</property>
+                            </structure>
+                        </list-property>
+                        <property name="pageBreakInterval">40000</property>
+                        <column id="3231"/>
+                        <column id="3232"/>
+                        <header>
+                            <row id="3222">
+                                <cell id="3223">
+                                    <property name="style">tableHeader</property>
+                                    <text-data id="3238">
+                                        <expression name="valueExpr">vars["messages"].get("forexCurrencies")</expression>
+                                        <property name="contentType">plain</property>
+                                    </text-data>
+                                </cell>
+                                <cell id="3224">
+                                    <property name="style">tableHeader</property>
+                                    <text-data id="3239">
+                                        <expression name="valueExpr">vars["messages"].get("forexRate")</expression>
+                                        <property name="contentType">plain</property>
+                                    </text-data>
+                                </cell>
+                            </row>
+                        </header>
+                        <detail>
+                            <row id="3225">
+                                <list-property name="highlightRules">
+                                    <structure>
+                                        <property name="operator">eq</property>
+                                        <expression name="testExpr" type="javascript">row.__rownum % 2</expression>
+                                        <simple-property-list name="value1">
+                                            <value type="javascript">0</value>
+                                        </simple-property-list>
+                                        <property name="style">even</property>
+                                    </structure>
+                                    <structure>
+                                        <property name="operator">eq</property>
+                                        <expression name="testExpr" type="javascript">row.__rownum % 2</expression>
+                                        <simple-property-list name="value1">
+                                            <value type="javascript">1</value>
+                                        </simple-property-list>
+                                        <property name="style">odd</property>
+                                    </structure>
+                                </list-property>
+                                <cell id="3226">
+                                    <data id="3240">
+                                        <property name="fontFamily">"Arial"</property>
+                                        <property name="fontSize">10pt</property>
+                                        <property name="textAlign">center</property>
+                                        <property name="whiteSpace">nowrap</property>
+                                        <property name="resultSetColumn">Currencies</property>
+                                    </data>
+                                </cell>
+                                <cell id="3227">
+                                    <data id="3241">
+                                        <property name="fontFamily">"Arial"</property>
+                                        <property name="fontSize">10pt</property>
+                                        <structure name="numberFormat">
+                                            <property name="category">Unformatted</property>
+                                        </structure>
+                                        <property name="textAlign">right</property>
+                                        <property name="whiteSpace">nowrap</property>
+                                        <property name="resultSetColumn">ForexRate</property>
+                                    </data>
+                                </cell>
+                            </row>
+                        </detail>
+                    </table>
+                </cell>
+            </row>
+        </grid>
+        <grid name="rateCurveGrids" id="3347">
+            <property name="pageBreakAfter">always</property>
+            <property name="pageBreakBefore">auto</property>
+            <list-property name="visibility">
+                <structure>
+                    <property name="format">all</property>
+                    <expression name="valueExpr" type="javascript">vars["action"].isIncludeRateCurve()==false</expression>
+                </structure>
+            </list-property>
+            <structure name="toc">
+                <expression name="expressionValue" type="javascript">reportContext.getGlobalVariable("rateCurveTab")</expression>
+            </structure>
+            <method name="onRender"><![CDATA[ reportContext.setPageVariable(reportContext.PAGE_VAR_PAGE_LABEL, reportContext.getGlobalVariable("rateCurveTab"))
+ 
+ if( reportContext.getOutputFormat() == "pdf" ){
+	this.getStyle().masterPage = "tableLandscapePdfCustom" ;
+} else if( reportContext.getOutputFormat() == "xls" ){
+	this.getStyle().masterPage = "tableLandscapeExcelCustomWithLogo" ;
+}]]></method>
+            <column id="3348"/>
+            <row id="3492">
+                <cell id="3493"/>
+            </row>
+        </grid>
+    </body>
+    <property name="pageVariables">
+        <variable-element name="messages">
+            <expression name="value" type="javascript">Packages.sgcib.clips.reporting.ActionManager.getCurrentAction().getMessages();</expression>
+            <property name="type">report</property>
+        </variable-element>
+        <variable-element name="action">
+            <expression name="value" type="javascript">Packages.sgcib.clips.reporting.ActionManager.getCurrentAction();</expression>
+            <property name="type">report</property>
+        </variable-element>
+        <variable-element name="mtmType">
+            <expression name="value" type="javascript">Packages.sgcib.clips.reporting.ActionManager.getCurrentAction().getMtmType();</expression>
+            <property name="type">report</property>
+        </variable-element>
+        <variable-element name="themeName">
+            <expression name="value" type="javascript">Packages.sgcib.clips.reporting.ActionManager.getCurrentAction().getReportTheme().getDisplayedLabel();</expression>
+            <property name="type">report</property>
+        </variable-element>
+    </property>
+    <list-property name="images">
+        <structure>
+            <property name="name">logoSGCIB.JPG</property>
+            <property name="data">
+                /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwg
+                JC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIy
+                MjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAzAUQDASIAAhEBAxEB/8QA
+                HwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIh
+                MUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVW
+                V1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXG
+                x8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQF
+                BgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAV
+                YnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOE
+                hYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq
+                8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigAoryf4n+Kdb0PxBbW+m38lvE1uGKqAcnJ55FcR/wsPx
+                X/0GZv8Avlf8KxlWSdj6DC8O4jE0Y1oyVn6/5H0fRXzh/wALD8V/9Bmb/vlf8KP+Fh+K/wDoMzf98r/h
+                S9vHsb/6q4r+eP4/5H0fRXiXgfxn4h1TxZZ2l7qcksDk7kZVwf0r22tITUldHj5hl9TA1FTqNNtX0Civ
+                OZviRqWp6/e6R4X0SO9ksm2zS3VyIVznHAxk1qaP4l8VTavDY6x4Sa2jlB/0q3uBJGmPXIFWcB2VFcd4
+                p8fRaHqkOi6dYTarrUwylrCcbR1yx7Csq58ZeNtIhN7qvg6JrFBulNndb5EXucEUAejUVz9r400S68KH
+                xIt0F09VLMzDlSOq49a5az8d+LvEEP2zw/4RU2B/1ct9ceWZB6gAUAek0Vyvh7xNrOoPeQax4cn02W2j
+                3+YXDRSeyms7SviG+peCdW8QnThG1hJIgh8zO/acZzjigDu6K800vx74y1nTYdQsfBkclvMMoxvMZH5V
+                t2mv+LpdOvJrjwqkNzEB5EP2oHzT35xxQB2FFeWan8S/FOj3tlZ33hCOOe8bbCv2vO45+lbsPivxLb6d
+                qV7rHhpLKK1gMiEXO/eR26cUAdtRXmml+PfGWs6bDqFj4MSS3mG6NjeYyPyrqfDer+IdSmmXWtBXTUUA
+                xsJ/M3H8qAOioqlq+rWeh6VcalfzCK2gTc7H/PWuDtfHfi3X4jd+HvCIawJ/dzXtx5ZkHqBigD0miuX8
+                L+Itb1a5ntdZ8OT6ZLCAfN3h4nz2U9a5qx+I3iXWbzUItH8KJdRWVw0DSfatvIJ9vagD02iuO0fxB4vv
+                NVt4NR8KJZ2jk+ZOLoNsGPTHNYtr8XrMeMrrQ9TsmtLeKcwJe7soW7BvTNAHpdFc14z8Vf8ACKaFHqUd
+                sLoPKkYXfgYY4zmsnxf49vfDt1o9rY6Qt9PqQGxDLswx6DpQB3dFcAfFPjzn/iiI/b/TR/hU3ivxzqPh
+                jRdIuX0ZZL+/lEJtfOxsYrnGcc80AdzRXnzeLfHSJ5jeCF2AZbF4M49uK6Dwf4ttvF2lPdQwSW00Mhin
+                gkOTG47ZoA6GivNtf+LVvo3io6ZFpsl1YW7Il7eo3ywMx6Y9uK7y/wBRS00W41GICZIoGmUA8MAM9aAL
+                tFc74J8Tt4u8Nw6s1sLYyEjyw27H40eNvE7eEfDcurLai5MbqvlltucnHWgDoqK87t/GPjm6tYriHwVG
+                0cqh1P2wcg8jtXV+HNQ1jUbOSTWdJXTZg+FjEu/I9c0AbNFFFABRRRQB4b8ZnRfFNoGdQfso6n/aNcpb
+                +E9fu7eO4t9JupIZFDI6pkMD0IrQ/aC/5HDTv+vPnn/aNeZJrerwxrHHqd4qLgKFlYACsXRTd7n0mF4j
+                qYbDwowgvd6tnoP/AAhfiX/oC3f/AHxSP4O8Rxozvo12FUEk7OgFcD/b+s5/5C95jp/rj1/OkOvayy4O
+                q3hByCDMf8aX1ddzb/WvEf8APtfiem/Dll/4TmxXcu7cRjPNfRlfJnwnJPxK0wkscsTk96+s60hDkVjx
+                80zF4+qqjjy2Vu54z4lm8EXviG6GuaBq+mXiuR9tgidRKB33LWRYXFza+JtPi8B6lrt6jyAXEV7GxgEf
+                f5j3r0+fxg97qNxY6JosurC2YpPMHVIkb+6CeprTXxDYWGn202rtDpEs3S3nlUEH+tWeacFrMN/4J+Jl
+                z4sfTp7/AErUIljmaBNz25CgZwO3FaepfFjRZ9Olg0q01DUL2ZCkdvHbMDkjA3HHArtLjXtHtbaKe41O
+                zjgmXMbvMoVx7HPNVG8UeGbWZEbVtOjkkAK/vVBIPSgDze1+GurS/CO+0qbEepXcxu/Izwpxwn6Vr6F8
+                UtO0/TIbDxBp99pd9boI3jNuxRscZUgV3uoa7pOlRRyX+o2tsknKGWUDd9PWo7vWdDitobm71CxWGUEx
+                SSSrtcDrgnr1FAGLo3jW38Vf2hBZ6bqEUEUJZbmeEokh6YGe9cF4YtLlfg34ohe2mErXE+2NkIZvm9O9
+                epnxRoEbRRnV7JTKAY1MyjIPT86rnxloa+JW8Pm7jW8CB8FhtOf4fr7UAeK+GU8Lw+H7WPU7vxVb3iqf
+                MigWUIpz2AFeteCfEGjXdqukaW+pyfZlz5l9EwYgn+83Wt5dc0ZtROnrqNmbwHHkCVd+euMetGu6vB4f
+                0W61SaJ5I7dNxWNeTQBwHxNgnl8ZeEXiglkRLj5mRCQvzDqR0rsvGyPJ4L1ZI0Z3NuwCqMk/hVbwz4wT
+                xDqF1YyWJguLdFk3JKJo2VunzDgH2rV8Q6zHoGh3OpyxNKkC7iinBNAHg/hlPDEPh+0j1O88VQXip+8j
+                gWVUU+gAHSvWfA+v6Lc2y6PpT6pJ9nQt5l9E4YgnP3m69a2JPE2h20Eb3uo2do7xq5jmmVWUEZHFXrfU
+                tOuZFjt7y3kdoxIqpICSn94e3vQBz/xG8OXPijwZeafZsPtOA8at0cg5wfrXO6F8UdO0vS4NO8Qadf6Z
+                e2qCNka3Yo2BjKmu6uPEmiWsAnn1WzjiLlA7TLgsOo/Ckv8AW9DtIIbi+v7JIpRmJ5HXDj1HrQBxfhvx
+                Tqvib4hTTWcd8vhxbYY8+Axr5me2favOdFh0e31jXv7dm8QWrvfSGIWKSKrLuPJwOa9tl8beH7bWLXSj
+                fw+bPHvRlcbAM4Az75q1N4n8PW8wim1ewSQts2NMoOfTGaAOL8Ga/wCGNNvjY6fPr88t4wAN9FIwUgHu
+                RxWZ4R8PQa14h8a2Gq2TtaXFwceYhAPIwVJ7+9emWWvaLqFzJb2WpWc80YJdI5VYgDvx2pbXxBo15PLD
+                a6naSyxAmRUlUlQOpNAHiPjTTfE3hnSYvDMsU2q6K91HJZ3iqWkiG4fI2M9K1Pitb79T8KPPFe/ZkQec
+                9qjF0GRkjHQ16tF4m0G4u47SLV7GSeTlI1nUlvpzVbSfGGia5qd3p9pdxvcW0nllCRlzjOV9RQB5jZXv
+                guwvobtNR8XO0TbgrrKyn6jFXvijcf8ACU6F4YudNjvFjl1EYcQsJIxtI3Edvxrt/Efip9E1Wz0220l7
+                64uo3kULKqYCYz1/3qn0jxfpepeHY9YuHWwgLmNhcMF2uDgjPQ8+lAHn3i3wV4t0vQ/tul+KtX1BY8G4
+                tWIDsnfbjvjtVqz1jTfC/wALlk8MWN699esY0imRjN57HBL8dsk59q9FTxFoslit6uq2f2Vm2CbzlC7v
+                TOevtWVrHjHTbTw3e6vpU1rqLWrBWSKQHkkDnH1oA4HSPh94ztfC93pXnaMYdS3SXPnxs0hLDufarfhK
+                81aw8M6/4N1qKVr3T7WT7PMEYrLGVOAD7eld/deI4YtIluYDbzXcUCzPbeeq7cjuT0/Gny+JtGtIEfUd
+                RsrSUoHaOSdcqD/MUAeYfDTxxpfhvwZbadqVtqSXMZO5VsnI/PFXfiF4ks/F3w81BNKt713hkjLJJbMp
+                Iz2B616Rc67otlaw3VzqNnFBP/qpGlUK/wBD3qbTdT0/V7cz6fcRXMIbbvjOVJ+vegDw/Tj4PTTrUXOo
+                eLknWNQ6IJQqnHIHHSvXPCOvabrOmmLTTemO02xFruJkc8dcnr9a6DYv90flQAB0AFAC0UUUAFFFFAHj
+                Xxc+HviDxd4js7zSbeGSCK38ti8gX5sk968//wCFJeNcf8ecA9cXC/419S0UAfLX/CkvGuT/AKHb4Pbz
+                1/xpT8E/Gvazg98zqa+pKKAPAPAHwr8U+H/GljqV/awpbRH5ysykj8M17/RRQB5/pul+I/B1/qEOnabD
+                qmm3dw1xGRMI5I2Y5IbPBFMvNH18eIh4gk0W21B7i08h7Nph/o7eqk8EHvXodFAHmOmeA9Sgm8PfbLe3
+                kht7qe4uISwZIg+4hVB64yKoT2t1deN/F2n2GiW1/wCdBDGDKyqkOQQDg/nx6V67UMdpbxXElxHBGk0u
+                PMkVQGfHTJ70Aec2/hHWfD2oadeR2cWupFYC1eOWQKYmBJyu7jBzioNL+H+pW13oEl5DBLDBczzzw7gV
+                gD7cKueo4Nep0UAeS+LvCPijW7nUrdbdZIHZfsbRSpFGiA9GGNxP41r/APCOaxZeM7XUodNguIJNOjtZ
+                ZPMCtC4GC3PX8K9DooA8i0/4falbaolvfWlzcwx3xuo7uK6RF+9uyykbs9q7bx1pGp6x4fFrppDkSK01
+                u0mz7RGPvJu7Zrp6KAPILTwn4s0zzY9Esl07R3mSWWx+0qZmI6hZB0X2Nd74u0y71vwbd2NrFi6miAWN
+                mHB9M10VFAHntr4Nu28UajfXlnbyQy6WltEz4YiQAD8OlUIvBOv2HhTRX03yYtdsxJBLuYFTDI7Z59lI
+                Ir1GigDyvWPh9f2l7pk+nJJdWsNqbeeGOZY33NyzjcCDnvSah4LvYdK06PTNHuUvrWJ/InF4jeUxJO1w
+                wwy9+PWvVaKAPPLzQNci8Q6Dq39l2d7LBatDdiNljCuSp3DPbg1Rl8B38vhzxJA1jbte39yZYGYqTtzn
+                r2r1GigDz6+8FXc2q2b2cUNrENLe1lkjwCHIXHTqODWT4f8AA+p2csK3dhOs9nBJFHcC7QxNlSBhQM4O
+                e9er0UAeZx+Br2Dw74ZgisbZL6yvRNdOCM7dxJ578EVqeG9F1PRPFmsM2lwNZXtwJku1dQUG0DG3r1ru
+                KKAOA8deGr7V/EWk30OkpqVrbRSpJC1x5Ry23HP4GsqLwn4r03wtFZWgiELXhlexjkUtFCc4VHYEZziv
+                VKKAPIbPwBrRszb3NmhgfWUvDHLMrnygDnOMAnpWh4h8D6nd3/iU6fbQx21/bwR24RgnzLtzx26GvTqK
+                APL7bwbreneENW8Nx2sNwlzCGhvN4EjOQMrJ64xwav2Hg26XxLd315Z28kT6YlvEz4bEgHNeg0UAeG3+
+                n6hosvh3TLdIV1W0hm85XKFRExGNu8hSeOxrvfhlPpn/AAjj2em/as28zLObhQCZCTuxjjGc9K6q90vT
+                9SCi+sre52fd86MNj6Zqa2tbezhENtBHDEOiRqFA/AUAS0UUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUU
+                UAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUU
+                UAFFFFAH/9k=
+            </property>
+        </structure>
+    </list-property>
+</report>

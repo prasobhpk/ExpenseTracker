@@ -1,0 +1,63 @@
+package sgcib.clips.reporting;
+
+/**
+ * Pseudo-singleton that manages access to reporting actions (Java actions used
+ * by BIRT to fill templates with data). This singleton used a Thread Local
+ * object to allow parallel report generations.
+ * 
+ */
+public class ActionManager {
+
+	/**
+	 * Thread local used to store reporting actions.
+	 */
+	static ThreadLocal<ReportAction> currentAction = new ThreadLocal<ReportAction>();
+
+	/**
+	 * Register a reporting action for the current thread.
+	 * 
+	 * @param action
+	 *            the action to register.
+	 */
+	static public void setCurrentAction(final ReportAction action) {
+		currentAction.set(action);
+	}
+
+	/**
+	 * Returns the reporting action registered for the current thread.
+	 */
+	static public ReportAction getCurrentAction() {
+		return currentAction.get();
+	}
+
+	/**
+	 * Returns the reporting action registered for the current thread.
+	 * 
+	 * <p>
+	 * This method will make sure the action is of the type specified or a child
+	 * type. It will also ensure the action was set.
+	 * </p>
+	 * 
+	 * @param <R>
+	 *            The type of the action
+	 * @param actionClass
+	 *            The class of the action
+	 * @return The action. Never <code>null</code>.
+	 * @throws IllegalStateException
+	 *             Either the action was not set, or it was not set in the type
+	 *             asked for.
+	 */
+	public static <R extends ReportAction> R typedCurrentAction(final Class<R> actionClass) {
+		final ReportAction action = getCurrentAction();
+
+		if (action == null) {
+			throw new IllegalStateException("The curent action was not set.");
+		}
+		if (!actionClass.isAssignableFrom(action.getClass())) {
+			throw new IllegalStateException("The current action is expected to be a " + actionClass.getCanonicalName()
+					+ ". Actual type of the curernt action is " + action.getClass().getCanonicalName() + ".");
+		}
+
+		return actionClass.cast(action);
+	}
+}

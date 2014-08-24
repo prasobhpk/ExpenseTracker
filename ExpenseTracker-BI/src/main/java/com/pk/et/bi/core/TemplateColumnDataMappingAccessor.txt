@@ -1,0 +1,8 @@
+package sgcib.clips.reporting.custom;
+
+import sgcib.clips.domain.TemplateColumn;
+import sgcib.clips.domain.TemplateColumnDataMapping;
+
+public interface TemplateColumnDataMappingAccessor {
+	TemplateColumnDataMapping getDataMapping(TemplateColumn templateColumn);
+}

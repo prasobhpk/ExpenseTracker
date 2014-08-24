@@ -1,0 +1,70 @@
+/**
+ * 
+ */
+package sgcib.clips.reporting;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+import sgcib.clips.shared.util.ClipsTechnicalException;
+
+/**
+ * MethodReportableDataProperty
+ * 
+ */
+public class MethodReportableDataProperty extends ReportableDataProperty {
+
+	final private Method method;
+
+	public MethodReportableDataProperty(final Method method) {
+		this.method = method;
+	}
+
+	@Override
+	public Object getValue(final Object object) {
+		Object value = null;
+
+		if (object != null) {
+			try {
+				value = this.method.invoke(object);
+			} catch (final IllegalArgumentException exc) {
+				throw new ClipsTechnicalException(exc);
+			} catch (final IllegalAccessException exc) {
+				throw new ClipsTechnicalException(exc);
+			} catch (final InvocationTargetException exc) {
+				throw new ClipsTechnicalException(exc);
+			}
+		}
+		return value;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((this.method == null) ? 0 : this.method.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final MethodReportableDataProperty other = (MethodReportableDataProperty) obj;
+		if (this.method == null) {
+			if (other.method != null) {
+				return false;
+			}
+		} else if (!this.method.equals(other.method)) {
+			return false;
+		}
+		return true;
+	}
+}

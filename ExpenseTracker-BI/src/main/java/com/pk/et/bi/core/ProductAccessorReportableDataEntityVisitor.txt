@@ -1,0 +1,87 @@
+/**
+ * 
+ */
+package sgcib.clips.reporting;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import sgcib.clips.domain.Product;
+import sgcib.clips.domain.ProductPrice;
+import sgcib.clips.domain.ProductUnderlying;
+import sgcib.clips.domain.ProductUnderlyingPricingParameter;
+import sgcib.clips.shared.domain.ReportableDataEntity;
+import sgcib.clips.shared.domain.ReportableDataEntityVisitor;
+
+/**
+ * Given a product and a target entity class, accessor to the associated target
+ * object. E.g. given a product instance & product price entity class, accessor
+ * to the product price associated to the product.
+ * 
+ */
+@Component
+public class ProductAccessorReportableDataEntityVisitor implements ReportableDataEntityVisitor<Object, Product> {
+
+	@Override
+	public Object visitProduct(final ReportableDataEntity reportableDataEntity, final Product product) {
+		return product;
+	}
+
+	@Override
+	public Object visitPosition(final ReportableDataEntity reportableDataEntity, final Product product) {
+		return null;
+	}
+
+	@Override
+	public Object visitMarkToMarker(final ReportableDataEntity reportableDataEntity, final Product product) {
+		return null;
+	}
+
+	@Override
+	public Object visitProductPrice(final ReportableDataEntity reportableDataEntity, final Product product) {
+		ProductPrice price = null;
+		final List<ProductPrice> pricesList = product.getProductPrices();
+		if (pricesList.size() == 1) {
+			price = pricesList.get(0);
+		} else if (pricesList.size() > 1) {
+			throw new ReportingException("Too many product prices for the product : " + product.getId().getValue());
+		}
+		return price;
+	}
+
+	@Override
+	public Object visitTrades(final ReportableDataEntity reportableDataEntity, final Product product) {
+		return null;
+	}
+
+	@Override
+	public Object visitUnderlyings(final ReportableDataEntity reportableDataEntity, final Product product) {
+		return product.getUnderlyings();
+	}
+
+	@Override
+	public Object visitProductUnderlyingPricingParameter(final ReportableDataEntity reportableDataEntity,
+			final Product product) {
+		final List<ProductUnderlyingPricingParameter> productUnderlyingPricingParameters = new ArrayList<ProductUnderlyingPricingParameter>();
+		final List<ProductUnderlying> productUnderlyings = product.getProductUnderlyings();
+		for (final ProductUnderlying productUnderlying : productUnderlyings) {
+			final List<ProductUnderlyingPricingParameter> parameters = productUnderlying.getParameters();
+			ProductUnderlyingPricingParameter productUnderlyingPricingParameter = null;
+			if (parameters.size() == 1) {
+				productUnderlyingPricingParameter = parameters.get(0);
+			} else if (parameters.size() > 1) {
+				throw new ReportingException(
+						"Too many product underlying pricing parameters for the product underlying : "
+								+ productUnderlying.getId() + " of the product : " + product.getId().getValue());
+			}
+			if (productUnderlyingPricingParameter != null) {
+				productUnderlyingPricingParameters.add(productUnderlyingPricingParameter);
+			}
+		}
+		return Collections.unmodifiableList(productUnderlyingPricingParameters);
+	}
+
+}

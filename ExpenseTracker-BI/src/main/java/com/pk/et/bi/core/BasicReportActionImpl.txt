@@ -1,0 +1,308 @@
+package sgcib.clips.reporting;
+
+import java.util.Date;
+
+import javax.persistence.EntityManager;
+
+import org.eclipse.birt.report.engine.api.script.IReportContext;
+import org.eclipse.birt.report.engine.api.script.ScriptException;
+import org.eclipse.birt.report.engine.api.script.instance.IDataSourceInstance;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
+import sgcib.clips.core.Messages;
+import sgcib.clips.domain.BookingEntity;
+import sgcib.clips.domain.ClipsParameter;
+import sgcib.clips.domain.Disclaimer;
+import sgcib.clips.domain.ReportParametrization;
+import sgcib.clips.domain.Subscription;
+import sgcib.clips.domain.TemplateParametrization;
+import sgcib.clips.reporting.custom.DFAColumnParametrizationAdder;
+import sgcib.clips.shared.domain.Locale;
+import sgcib.clips.time.TimeProvider;
+import sgcib.clips.util.DateUtil;
+
+import com.google.common.annotations.VisibleForTesting;
+
+/**
+ * Basic report action implementation.
+ */
+public abstract class BasicReportActionImpl implements ReportAction {
+
+	public static final String EN = "en_";
+
+	public static final String FR = "fr_";
+
+	public static final String PHONE_NUMBER = "_PhoneNumber";
+
+	/**
+	 * An index.
+	 */
+	protected int currentrow;
+
+	/**
+	 * The subscription currently processed.
+	 */
+	protected Subscription subscription;
+
+	/**
+	 * The report parameterization currently processed.
+	 */
+	protected ReportParametrization reportParametrization;
+
+	/**
+	 * A time provider
+	 */
+	protected TimeProvider timeProvider;
+
+	/**
+	 * The messages.
+	 */
+	protected Messages messages;
+
+	/**
+	 * The disclaimer.
+	 */
+	protected Disclaimer disclaimer;
+
+	EntityManager entityManager;
+
+	/**
+	 * @return the subscription
+	 */
+	public Subscription getSubscription() {
+		return this.subscription;
+	}
+
+	/**
+	 * Set the subscription.
+	 * 
+	 * @param subscription
+	 *            the subscription to set.
+	 */
+	public void setSubscription(final Subscription subscription) {
+		this.subscription = subscription;
+	}
+
+	/**
+	 * Set the report parametrization.
+	 * 
+	 * @param reportParametrization
+	 *            the report parametrization to set.
+	 */
+	public void setReportParametrization(final ReportParametrization reportParametrization) {
+		this.reportParametrization = reportParametrization;
+	}
+
+	/**
+	 * @return the time provider.
+	 */
+	public TimeProvider getTimeProvider() {
+		return this.timeProvider;
+	}
+
+	/**
+	 * Set the time provider.
+	 * 
+	 * @param timeProvider
+	 *            the time provider to set.
+	 */
+	public void setTimeProvider(final TimeProvider timeProvider) {
+		this.timeProvider = timeProvider;
+	}
+
+	/**
+	 * @return the messages.
+	 */
+	public Messages getMessages() {
+		return this.messages;
+	}
+
+	/**
+	 * Set the messages.
+	 * 
+	 * @param messages
+	 *            the messages to set.
+	 */
+	public void setMessages(final Messages messages) {
+		this.messages = messages;
+	}
+
+	/**
+	 * @return the disclaimer.
+	 */
+	public Disclaimer getDisclaimer() {
+		return this.disclaimer;
+	}
+
+	/**
+	 * Set the disclaimer.
+	 * 
+	 * @param disclaimer
+	 *            the disclaimer to set.
+	 */
+	@VisibleForTesting
+	public void setDisclaimer(final Disclaimer disclaimer) {
+		this.disclaimer = disclaimer;
+	}
+
+	/**
+	 * Prepare the action. Initialize the messages and the disclaimer.
+	 * 
+	 * @param subscription
+	 * @param reportParametrization
+	 * @param timeProvider
+	 */
+	public void prepare(final EntityManager entityManager, final Subscription subscription,
+			final ReportParametrization reportParametrization, final TimeProvider timeProvider) {
+		this.subscription = subscription;
+		this.reportParametrization = reportParametrization;
+		this.timeProvider = timeProvider;
+		this.entityManager = entityManager;
+		initMessages();
+		initDisclaimer();
+	}
+
+	/**
+	 * Initializes the messages.
+	 */
+	protected void initMessages() {
+		final TemplateParametrization templateParametrization = this.reportParametrization.getTemplateParametrization();
+		this.messages = Messages.loadMessagesByLocaleAndTemplateParametrization(this.entityManager, this.subscription
+				.getLocale(), templateParametrization,
+				new DFAColumnParametrizationAdder(this.reportParametrization.getProductType()));
+	}
+
+	/**
+	 * Initializes the disclaimer.
+	 */
+	private void initDisclaimer() {
+		final Locale locale = this.subscription.getLocale();
+		this.disclaimer = this.reportParametrization.getTemplateParametrization().getTemplate()
+				.getDisclaimerByLocale(locale);
+	}
+
+	/**
+	 * Initializes the index.
+	 * 
+	 * @param dataSource
+	 * @throws ScriptException
+	 */
+	public void openDataSource(final IDataSourceInstance dataSource) throws ScriptException {
+		this.currentrow = 0;
+	}
+
+	/**
+	 * Return the report creation date formatted with the given date format.
+	 * 
+	 * @param dateFormat
+	 *            the date format to consider.
+	 * @return the report creation date formatted with the given date format.
+	 */
+	public String getCreationDateFormatted(final String dateFormat) {
+		final DateTime currentDateTime = this.timeProvider.getCurrentDateTime();
+		final DateTimeZone dateTimeZone = this.subscription.getScheduleSpecification().getDateTimeZone();
+		final DateTimeFormatter dateFormatter = DateTimeFormat.forPattern(dateFormat).withZone(dateTimeZone)
+				.withLocale(this.subscription.getJavaLocale());
+		return dateFormatter.print(currentDateTime);
+	}
+
+	/**
+	 * @return the disclaimer text.
+	 */
+	public String getDisclaimerText() {
+		return getDisclaimer().getText();
+	}
+
+	/**
+	 * @return the SG logo for all the reports.
+	 */
+	public String getSGLogo() {
+		if (this.subscription.getPerimeterSpecification().getBookingEntity() != null) {
+			return manageLogoWithLocale(this.subscription.getPerimeterSpecification().getBookingEntity().getLogoPath());
+		}
+		final BookingEntity defaultBookingEntity = new BookingEntity().getDefaultBookingEntity();
+		if (defaultBookingEntity != null) {
+			return manageLogoWithLocale(defaultBookingEntity.getLogoPath());
+		} else {
+			return "";
+		}
+	}
+
+	/**
+	 * Manage locale in logo (FR or EN)
+	 * 
+	 * @param logoPath
+	 *            the logo path to modify.
+	 * @return the logo path modified.
+	 */
+	protected String manageLogoWithLocale(final String logoPath) {
+		final StringBuilder sb = new StringBuilder();
+		if (this.subscription.getLocale().equals(Locale.FRENCH)) {
+			sb.append(FR);
+		} else if (this.subscription.getLocale().equals(Locale.ENGLISH)) {
+			sb.append(EN);
+		} else {
+			sb.append(EN);
+		}
+		sb.append(logoPath);
+		return sb.toString();
+	}
+
+	/**
+	 * @return the do not hesitate to contact message.
+	 */
+	public String getDoNotHesitateToContactMessage() {
+		final String from = this.subscription.getChannelSpecification().getFromForMailChannel();
+		final ClipsParameter fromPhoneNumber = new ClipsParameter().getClipsParameterById(from + PHONE_NUMBER);
+		if (fromPhoneNumber != null) {
+			return this.messages.format("doNotHesitateToContact", from, fromPhoneNumber.getStringValue());
+		} else {
+			return this.messages.format("doNotHesitateToContactWithoutPhoneNumber", from);
+		}
+	}
+
+	/**
+	 * Sets global variables. This variables will be used later by the report
+	 * engine. Some of these variables will be used in order to name the
+	 * different excel sheets.
+	 * 
+	 * @param dataSource
+	 * @param reportContext
+	 * @throws ScriptException
+	 */
+	public abstract void afterOpenDatasource(final IDataSourceInstance dataSource, final IReportContext reportContext)
+			throws ScriptException;
+
+	/**
+	 * Return the report creation date (a localized date).
+	 * 
+	 * @return the creation date (a localized date).
+	 */
+	public abstract String getCreationDate();
+
+	/**
+	 * Transform a {@link LocalDate} to {@link Date}
+	 * 
+	 * @param localDate
+	 *            the local date to transform.
+	 * @return the date.
+	 */
+	public Date localDateToDate(final LocalDate localDate) {
+		if (localDate != null) {
+			return DateUtil.convertLocalDateToDateAtUTCMidday(localDate);
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * @return the subscription date format.
+	 */
+	public String getSubscriptionDateFormat() {
+		return this.subscription.getTemplateSpecification().getDateFormat();
+	}
+}

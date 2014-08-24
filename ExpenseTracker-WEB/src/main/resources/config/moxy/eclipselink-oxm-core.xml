@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<xml-bindings package-name="com.pbpoc.core.model"
+	xmlns="http://www.eclipse.org/eclipselink/xsds/persistence/oxm"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.3">
+	<java-types>
+		<java-type name="Extensible" xml-accessor-type="NONE">
+			<xml-virtual-access-methods schema="NODES"
+				get-method="getExtension" set-method="setExtension" />
+			<java-attributes>
+				<xml-transient java-attribute="attributes" />
+				<xml-transient java-attribute="extensions" />
+			</java-attributes>
+		</java-type>
+		<java-type name="Address" xml-accessor-type="PROPERTY">
+			<java-attributes>
+				<xml-transient java-attribute="addId" />
+			</java-attributes>
+		</java-type>
+	</java-types>
+</xml-bindings>

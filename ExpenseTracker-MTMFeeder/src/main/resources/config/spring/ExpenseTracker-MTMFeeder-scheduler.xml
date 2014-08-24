@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="schedulerBean"
+		class="org.springframework.scheduling.quartz.SchedulerFactoryBean"
+		lazy-init="false">
+		<property name="triggers">
+			<list>
+				<ref bean="mtmFeederCron" />
+			</list>
+		</property>
+	</bean>
+	
+	<!-- 
+		Define all the Jobs frequently triggered by the JobSender bean.
+		The JobSender bean ensure each job is not sent more than once at a time using the JobUniqueInstance table.
+	 -->
+
+	<bean name="jobSenderDetail" abstract="true"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="jobSender" />
+		<property name="targetMethod" value="sendJob" />
+	</bean>
+	
+	<!-- SCHEDULER FOR sending gop tradings infos batchs -->
+	<!-- run every day at 8h30 : value="0 30 8 * * ?"    -->
+	<!-- =============================================== -->
+	<bean id="mtmFeederCron" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail">
+			<bean parent="jobSenderDetail">
+				<property name="arguments">
+					<value>FEEDER_MTM</value>
+				</property>
+			</bean>
+		</property>
+		<property name="cronExpression" value="0 0 0/5 * * ?" />
+	</bean>
+</beans>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+       "http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+
+<tiles-definitions>
+	<definition name="regForm" extends="default">
+		<put-attribute name="title" value="Registration" />
+		<put-attribute name="ui-layout-north-content" value="" />
+		<put-attribute name="ui-layout-west-content" value="" />
+		<put-attribute name="body" value="/WEB-INF/jsp/regForm.jsp" />
+	</definition>
+	<definition name="reportTestForm" extends="default">
+		<put-attribute name="title" value="add equity" />
+		<put-attribute name="body" value="/WEB-INF/jsp/Dynamic.jsp" />
+	</definition>
+</tiles-definitions>

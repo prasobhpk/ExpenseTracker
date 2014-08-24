@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project>
+	<target name="replace-proj-ver">
+		<!-- <taskdef resource="net/sf/antcontrib/antcontrib.properties" -->
+		<!-- classpathref="maven.plugin.classpath" /> -->
+		<!-- <replace file="src/main/resources/META-INF/persistence.xml" 
+											token="#proj.version#" value="${version}" /> -->
+		<replaceregexp file="src/main/resources/META-INF/persistence.xml" match="WEB-INF/lib/ExpenseTracker-INFRA-(.*?).jar" replace="WEB-INF/lib/ExpenseTracker-INFRA-${version}.jar" byline="true" />
+		<replaceregexp file="src/main/resources/META-INF/persistence.xml" match="WEB-INF/lib/ExpenseTracker-EXP-(.*?).jar" replace="WEB-INF/lib/ExpenseTracker-EXP-${version}.jar" byline="true" />
+		<replaceregexp file="src/main/resources/META-INF/persistence.xml" match="WEB-INF/lib/ExpenseTracker-WM-(.*?).jar" replace="WEB-INF/lib/ExpenseTracker-WM-${version}.jar" byline="true" />
+	</target>
+	<!--
+	<target name="replace-weave-ver">
+		<replaceregexp file="src/main/weave/META-INF/persistence.xml" match="ExpenseTracker-INFRA-(.*?).jar" replace="ExpenseTracker-INFRA-${version}.jar" byline="true" />
+		<replaceregexp file="src/main/weave/META-INF/persistence.xml" match="ExpenseTracker-EXP-(.*?).jar" replace="ExpenseTracker-EXP-${version}.jar" byline="true" />
+		<replaceregexp file="src/main/weave/META-INF/persistence.xml" match="ExpenseTracker-WM-(.*?).jar" replace="ExpenseTracker-WM-${version}.jar" byline="true" />
+	</target>
+-->
+
+	<target name="deploy-tomcat">
+
+		<echo message="=================== Start Deployment ======================" />
+		<!--
+		<echo message="Stopping tomcat at  ${TOMCAT_HOME}" />
+		<exec dir="${TOMCAT_HOME}/bin/" executable="cmd">
+			<arg line="/c shutdown.bat" />
+			<env key="CATALINA_BASE" value="${TOMCAT_HOME}" />
+			<env key="CATALINA_HOME" value="${TOMCAT_HOME}" />
+			<env key="CATALINA_TMPDIR" value="${TOMCAT_HOME}/temp" />
+		</exec>
+		-->
+		<echo message="Clean tomcat at  ${TOMCAT_HOME}" />
+
+		<delete dir="${TOMCAT_HOME}/webapps/${war.name}" />
+		<delete file="${TOMCAT_HOME}/webapps/${war.name}.war" />
+		<delete dir="${TOMCAT_HOME}/work/Catalina/localhost/${war.name}" />
+
+		<echo message="Deploying the war file ${war.name}.war to ${TOMCAT_HOME}" />
+		<copy file="target/${war.name}.war" todir="${TOMCAT_HOME}/webapps/" />
+		<!-- <exec dir="${TOMCAT_HOME}/bin" executable="cmd" spawn="true"> 
+											<arg line="/c startup.bat" /> <env key="CATALINA_BASE" value="${TOMCAT_HOME}" 
+											/> <env key="CATALINA_HOME" value="${TOMCAT_HOME}" /> <env key="CATALINA_TMPDIR" 
+											value="${TOMCAT_HOME}\temp" /> </exec> <echo message="=================== 
+											Deployment success ===================" /> -->
+	</target>
+</project>

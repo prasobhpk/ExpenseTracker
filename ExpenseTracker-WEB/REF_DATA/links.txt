@@ -1,0 +1,6 @@
+http://bbs.prog365.com/java-help-regex-to-parse-html-table-50417-1-1.html
+http://htmlparser.sourceforge.net/
+http://chasethedevil.blogspot.com/2006/05/java-html-parsing-example-with.html
+http://stackoverflow.com/questions/3047391/parsing-complex-string-using-regex
+http://download.oracle.com/javase/tutorial/essential/regex/matcher.html
+http://blogs.oracle.com/jtb/entry/cross_domain_iframe_resizing

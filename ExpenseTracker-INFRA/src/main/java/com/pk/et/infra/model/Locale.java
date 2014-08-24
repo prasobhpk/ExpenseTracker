@@ -1,0 +1,59 @@
+package com.pk.et.infra.model;
+
+public enum Locale {
+	ENGLISH("ENGLISH", "en", ""), //
+	FRENCH("FRENCH", "fr", ""), //
+	JAPANESE("Japanese", "ja", ""), //
+	TRADITIONAL_CHINESE("Traditional Chinese", "zh", ""), //
+	SIMPLIFIED_CHINESE("Simplified Chinese", "zhs", ""), //
+	SPANISH("Spanish", "es", ""), //
+	GERMAN("German", "de", ""), //
+	DUTCH("Dutch", "nl", ""), //
+	CZECH("Czech", "cs", ""), POLISH("Polish", "pl", ""), ITALIAN("Italian",
+			"it", "");
+
+	private final String value;
+	private final String isoCodeLanguage;
+
+	private final String isoCodeCountry;
+
+	public static final Locale DEFAULT_LOCALE = ENGLISH;
+
+	private Locale(final String value, final String isoCodeLanguage,
+			final String isoCodeCountry) {
+		this.value = value;
+		this.isoCodeLanguage = isoCodeLanguage;
+		this.isoCodeCountry = isoCodeCountry;
+	}
+
+	public String getValue() {
+		return this.value;
+	}
+
+	public String getIsoCodeLanguage() {
+		return this.isoCodeLanguage;
+	}
+
+	public String getIsoCodeCountry() {
+		return this.isoCodeCountry;
+	}
+
+	/**
+	 * Will return a Locale from a language's iso code. If the language is not
+	 * supported, will return the {@link #DEFAULT_LOCALE}.
+	 * 
+	 * @param isoCode
+	 *            Code of the language to use.
+	 * @return The Locale computed from the language (first locale to match) or
+	 *         the default if not supported.
+	 */
+	public static Locale fromIsoCodeLanguage(final String isoCode) {
+		for (final Locale locale : Locale.values()) {
+			if (locale.isoCodeLanguage.equals(isoCode)) {
+				return locale;
+			}
+		}
+		return DEFAULT_LOCALE;
+	}
+
+}

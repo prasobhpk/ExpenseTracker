@@ -1,0 +1,142 @@
+package sgcib.clips.domain;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.Type;
+
+import sgcib.clips.shared.domain.TemplateGridId;
+import sgcib.clips.shared.domain.TemplateGridParametrizationId;
+import sgcib.clips.util.hibernate.HibernateTypeName;
+
+@Entity
+@Table(name = "TEMPLATE_GRID")
+public class TemplateGrid extends ActiveRecordBaseImportedEntity<TemplateGridId> {
+
+	@Id
+	@Type(type = HibernateTypeName.TEMPLATE_GRID_ID)
+	@Column(name = "NAME", updatable = false, insertable = false)
+	private TemplateGridId id;
+
+	@Column(name = "NAME", unique = true, nullable = false, updatable = false, insertable = false)
+	private String name;
+
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "TEMPLATE_GRID_COLUMN", joinColumns = { @JoinColumn(name = "GRID", nullable = false, updatable = false) }, inverseJoinColumns = { @JoinColumn(name = "TEMPLATE_COLUMN", nullable = false, updatable = false) })
+	private Set<TemplateColumn> columns;
+
+	/**
+	 * Default constructor should only be used by the exporter. Use
+	 * {@link #ReportGrid(String)} to construct a {@link TemplateGrid} with a
+	 * given name used as its primary key.
+	 */
+	public TemplateGrid() {
+	}
+
+	/**
+	 * Create a {@link TemplateGrid} entity and set is name attribute. Will also
+	 * set its id as the {@link #name} is used as the primary key.
+	 * 
+	 * @param name
+	 *            Name of the template.
+	 */
+	public TemplateGrid(final String name) {
+		this.id = new TemplateGridId(name);
+		this.name = name;
+	}
+
+	public TemplateGrid(final String name, final Set<TemplateColumn> columns) {
+		this.name = name;
+		this.columns = columns;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public void setName(final String name) {
+		this.name = name;
+	}
+
+	public Set<TemplateColumn> getColumns() {
+		return this.columns;
+	}
+
+	public void setColumns(final Set<TemplateColumn> columns) {
+		this.columns = columns;
+	}
+
+	@Override
+	public TemplateGridId getId() {
+		return this.id;
+	}
+
+	/**
+	 * Setting the id will also set the {@link #name} attribute used as the
+	 * primary key.
+	 */
+	public void setId(final TemplateGridId id) {
+		this.id = id;
+		this.name = id.getValue();
+	}
+
+	/**
+	 * Associates a column to the grid.
+	 * 
+	 * @param column
+	 *            the column to add.
+	 */
+	public void addColumn(final TemplateColumn column) {
+		if (!this.columns.contains(column)) {
+			this.columns.add(column);
+		}
+	}
+
+	/**
+	 * Creates a grid parameterization that is aligned with this grid.
+	 */
+	public TemplateGridParametrization createParametrization() {
+		final TemplateGridParametrization gridParametrization = TemplateGridParametrization.create();
+		gridParametrization.setTemplateGrid(this);
+		return gridParametrization;
+	}
+
+	/**
+	 * Create method.
+	 * 
+	 * @return A new grid.
+	 */
+	public static TemplateGrid create() {
+		final TemplateGrid reportgrid = new TemplateGrid();
+		reportgrid.columns = new HashSet<TemplateColumn>();
+		return reportgrid;
+	}
+
+	/**
+	 * Create method.
+	 * 
+	 * @return A new grid.
+	 */
+	public static TemplateGrid create(final String name) {
+		final TemplateGrid reportgrid = new TemplateGrid(name);
+		reportgrid.columns = new HashSet<TemplateColumn>();
+		return reportgrid;
+	}
+
+	public TemplateGridParametrization createParametrization(final String templParam) {
+		final TemplateGridParametrization gridParametrization = TemplateGridParametrization.create();
+		gridParametrization.setId(new TemplateGridParametrizationId(getId(), templParam));
+		gridParametrization.setTemplateGrid(this);
+		return gridParametrization;
+	}
+
+}

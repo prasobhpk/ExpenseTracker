@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1"
+	xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+	<persistence-unit name="ExpenseTracker-INFRA" transaction-type="RESOURCE_LOCAL">
+		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+		<mapping-file>META-INF/eclipselink-orm.xml</mapping-file>
+		<class>com.pk.et.infra.model.User</class>
+		<class>com.pk.et.infra.model.Configuration</class>
+		<class>com.pk.et.infra.model.ConfigurationItem</class>
+		<class>com.pk.et.infra.model.Name</class>
+		<class>com.pk.et.infra.model.SessionRegistryItem</class>
+		<class>com.pk.et.infra.model.UserAuthority</class>
+		<class>com.pk.et.infra.model.BaseEntity</class>
+		<class>com.pk.et.infra.model.AuditedObject</class>
+		<class>com.pk.et.infra.model.Extensible</class>
+		<class>com.pk.et.infra.model.Extension</class>
+		<class>com.pk.et.infra.model.ExtensionValue</class>
+		<class>com.pk.et.infra.model.WMParams</class>
+		<class>com.pk.et.infra.model.JobUniqueInstance</class>
+		<exclude-unlisted-classes>true</exclude-unlisted-classes>
+	</persistence-unit>
+	
+</persistence>

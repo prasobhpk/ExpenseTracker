@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+       "http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+
+<tiles-definitions>
+
+	<definition name="default" template="/WEB-INF/tiles/layouts/default.jsp">
+		<put-attribute name="jsInclude" value="/WEB-INF/jsp/common/includeJs.jsp" />
+		<put-attribute name="title" value="Template" />
+		<put-attribute name="header" value="/WEB-INF/jsp/common/header.jsp" />
+		<put-attribute name="top_menu" value="" />
+		<put-attribute name="userMenu" value="" />
+		<put-attribute name="body" value="/WEB-INF/jsp/common/body.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/jsp/common/footer.jsp" />
+	</definition>
+	<definition name="baseLayout" template="/WEB-INF/tiles/layouts/baseLayout.jsp">
+		<put-attribute name="jsInclude" value="/WEB-INF/jsp/common/includeJs.jsp" />
+		<put-attribute name="title" value="Template" />
+		<put-attribute name="top_menu" value="/WEB-INF/jsp/common/topMenu.jsp" />
+		<put-attribute name="ui-layout-north-content" value="/WEB-INF/jsp/common/ui-layout-north-content.jsp" />
+		<put-attribute name="ui-layout-east-content" value="/WEB-INF/jsp/common/ui-layout-east-content.jsp" />
+		<put-attribute name="ui-layout-south-content" value="/WEB-INF/jsp/common/ui-layout-south-content.jsp" />
+		<put-attribute name="ui-layout-west-content" value="/WEB-INF/jsp/common/ui-layout-west-content.jsp" />
+		<put-attribute name="body" value="/WEB-INF/jsp/common/body.jsp" />
+	</definition>
+	<definition name="loginForm" extends="default">
+		<put-attribute name="jsInclude" value="" />
+		<put-attribute name="title" value="Sign In" />
+		<put-attribute name="body" value="/login.jsp" />
+	</definition>
+	<definition name="timeout" extends="baseLayout">
+		<put-attribute name="title" value="Session Expired" />
+		<put-attribute name="ui-layout-north-content" value="" />
+		<put-attribute name="ui-layout-west-content" value="" />
+		<put-attribute name="body" value="/timeout.jsp" />
+	</definition>
+	<!-- <definition name="admin_home" extends="baseLayout"> <put-attribute 
+		name="title" value="home" /> <put-attribute name="body" value="/WEB-INF/admin/adminhome.jsp" 
+		/> </definition> <definition name="newMenu" extends="baseLayout"> <put-attribute 
+		name="title" value="new menu" /> <put-attribute name="body" value="/WEB-INF/admin/newMenu.jsp" 
+		/> </definition> <definition name="listMenu" extends="baseLayout"> <put-attribute 
+		name="title" value="Menu List" /> <put-attribute name="body" value="/WEB-INF/admin/menuList.jsp" 
+		/> </definition> <definition name="editMenu" extends="baseLayout"> <put-attribute 
+		name="title" value="Edit Menu" /> <put-attribute name="body" value="/WEB-INF/admin/editMenu.jsp" 
+		/> </definition> -->
+
+
+</tiles-definitions>

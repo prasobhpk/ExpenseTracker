@@ -1,0 +1,60 @@
+/**
+ * 
+ */
+package sgcib.clips.reporting;
+
+import org.springframework.stereotype.Component;
+
+import sgcib.clips.domain.MarkToMarket;
+import sgcib.clips.domain.Position;
+import sgcib.clips.domain.Product;
+import sgcib.clips.domain.ProductPrice;
+import sgcib.clips.domain.ProductUnderlyingPricingParameter;
+import sgcib.clips.domain.Trades;
+import sgcib.clips.shared.domain.ReportableDataEntity;
+import sgcib.clips.shared.domain.ReportableDataEntityVisitor;
+
+/**
+ * Mapper between ReportableDataEntity enumeration values and entities class
+ * 
+ */
+@Component
+public class EntityClassMapperReportableDataEntityVisitor implements ReportableDataEntityVisitor<Class<?>, Object> {
+
+	@Override
+	public Class<?> visitProduct(final ReportableDataEntity reportableDataEntity, final Object parameter) {
+		return Product.class;
+	}
+
+	@Override
+	public Class<?> visitPosition(final ReportableDataEntity reportableDataEntity, final Object parameter) {
+		return Position.class;
+	}
+
+	@Override
+	public Class<?> visitMarkToMarker(final ReportableDataEntity reportableDataEntity, final Object parameter) {
+		return MarkToMarket.class;
+	}
+
+	@Override
+	public Class<?> visitProductPrice(final ReportableDataEntity reportableDataEntity, final Object parameter) {
+		return ProductPrice.class;
+	}
+
+	@Override
+	public Class<?> visitTrades(final ReportableDataEntity reportableDataEntity, final Object parameter) {
+		return Trades.class;
+	}
+
+	@Override
+	public Class<?> visitUnderlyings(final ReportableDataEntity reportableDataEntity, final Object parameter) {
+		return Product.class;
+	}
+
+	@Override
+	public Class<?> visitProductUnderlyingPricingParameter(final ReportableDataEntity reportableDataEntity,
+			final Object parameter) {
+		return ProductUnderlyingPricingParameter.class;
+	}
+
+}

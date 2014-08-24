@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<xml-bindings package-name="com.pk.et.wm.model"
+	xmlns="http://www.eclipse.org/eclipselink/xsds/persistence/oxm"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.3">
+	<java-types>
+		<java-type name="Holding" xml-accessor-type="NONE">
+			<xml-root-element />
+			<!-- <xml-virtual-access-methods schema="NODES"/> -->
+			<java-attributes>
+				<xml-attribute java-attribute="id" />
+				<xml-element java-attribute="price" nillable="true" />
+				<xml-element java-attribute="quantity" nillable="true" />
+				<xml-element java-attribute="amount" nillable="true" />
+				<xml-element java-attribute="brokerage" nillable="true" />
+				<xml-element java-attribute="totalAmount" nillable="true" />
+				<xml-element java-attribute="profit" nillable="true" />
+				<!-- <xml-element java-attribute="phoneNumbers" name="phoneNumber" nillable="true"> -->
+				<!-- <xml-element-wrapper name="phoneNumbers"/> -->
+				<!-- </xml-element> -->
+				<!-- <xml-element java-attribute="phoneNumbers" nillable="true" /> -->
+			</java-attributes>
+		</java-type>
+
+		<java-type name="MarkToMarket" xml-accessor-type="NONE">
+			<java-attributes>
+				<xml-element java-attribute="symbol" name="CompanyCode"
+					nillable="true" />
+				<xml-element java-attribute="lastTradedPrice" name="LastTradedPrice"
+					nillable="true">
+					<xml-java-type-adapter value="com.pk.et.wm.jaxb.adapters.PriceAdapter" />
+				</xml-element>
+				<xml-element java-attribute="lastTradedTime" name="LastTradedTime"
+					nillable="true">
+					<xml-java-type-adapter value="com.pk.et.wm.jaxb.adapters.DateTimeAdapter" />
+				</xml-element>
+				<xml-element java-attribute="volume" name="Volume"
+					nillable="true">
+					<xml-java-type-adapter value="com.pk.et.wm.jaxb.adapters.PriceAdapter" />
+				</xml-element>
+				<xml-element java-attribute="percentageDiff" name="PercentageDiff"
+					nillable="true" />
+				<xml-element java-attribute="fiftyTwoWeekHigh" name="FiftyTwoWeekHigh"
+					nillable="true">
+					<xml-java-type-adapter value="com.pk.et.wm.jaxb.adapters.PriceAdapter" />
+				</xml-element>
+				<xml-element java-attribute="fiftyTwoWeekLow" name="FiftyTwoWeekLow"
+					nillable="true">
+					<xml-java-type-adapter value="com.pk.et.wm.jaxb.adapters.PriceAdapter" />
+				</xml-element>
+				<xml-element java-attribute="changePercent" name="ChangePercent"
+					nillable="true">
+					<xml-java-type-adapter value="com.pk.et.wm.jaxb.adapters.PriceAdapter" />
+				</xml-element>
+				<xml-element java-attribute="change" name="Change"
+					nillable="true">
+					<xml-java-type-adapter value="com.pk.et.wm.jaxb.adapters.PriceAdapter" />
+				</xml-element>
+				<xml-element java-attribute="marketCap" name="MarketCap"
+					nillable="true">
+					<xml-java-type-adapter value="com.pk.et.wm.jaxb.adapters.PriceAdapter" />
+				</xml-element>
+				<xml-element java-attribute="daysHigh" name="High"
+					nillable="true">
+					<xml-java-type-adapter value="com.pk.et.wm.jaxb.adapters.PriceAdapter" />
+				</xml-element>
+				<xml-element java-attribute="daysLow" name="Low"
+					nillable="true">
+					<xml-java-type-adapter value="com.pk.et.wm.jaxb.adapters.PriceAdapter" />
+				</xml-element>
+				<xml-element java-attribute="previousClose" name="PrevClose"
+					nillable="true">
+					<xml-java-type-adapter value="com.pk.et.wm.jaxb.adapters.PriceAdapter" />
+				</xml-element>
+			</java-attributes>
+		</java-type>
+		<java-type name="MarketStatus">
+		</java-type>
+	</java-types>
+</xml-bindings>

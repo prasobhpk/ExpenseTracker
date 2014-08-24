@@ -1,0 +1,59 @@
+/**
+ * 
+ */
+package sgcib.clips.reporting;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.joda.time.LocalDate;
+import org.springframework.stereotype.Component;
+
+import sgcib.clips.shared.domain.Currency;
+import sgcib.clips.shared.domain.ProductType;
+import sgcib.clips.shared.util.StringUtil;
+import sgcib.clips.util.DateUtil;
+
+/**
+ * ReportableDataValueConverter
+ * 
+ */
+@Component
+public class ReportableDataValueConverter {
+
+	public Object convert(final Object value) {
+		Object reportedValue = value;
+		if (value instanceof Currency) {
+			final Currency currency = (Currency) value;
+			if (currency.equals(Currency.XXX)) {
+				reportedValue = StringUtil.BLANK;
+			} else {
+				reportedValue = currency.getValue();
+			}
+		} else if (value instanceof LocalDate) {
+			final LocalDate localDate = (LocalDate) value;
+			reportedValue = DateUtil.convertLocalDateToDateAtUTCMidday(localDate);
+		} else if (value instanceof ProductType) {
+			final ProductType productType = (ProductType) value;
+			reportedValue = productType.getValue();
+		} else if (value instanceof String && StringUtils.isNumeric((String) value)
+				&& !((String) value).trim().isEmpty()) {
+			reportedValue = Integer.parseInt((String) value);
+		}
+		if (value instanceof List<?>) {
+			final List<?> valueItems = (List<?>) value;
+			final Iterator<?> itemsIterator = valueItems.iterator();
+			final List<Object> objectList = new ArrayList<Object>();
+			while (itemsIterator.hasNext()) {
+				final Object valueItem = itemsIterator.next();
+				final Object reportValueItem = convert(valueItem);
+				objectList.add(reportValueItem);
+			}
+			reportedValue = objectList;
+		}
+		return reportedValue;
+	}
+
+}

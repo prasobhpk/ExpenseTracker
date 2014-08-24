@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+       "http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+
+<tiles-definitions>
+	<definition name="expenseHome" extends="baseLayout">
+		<put-attribute name="title" value="Expenses" />
+		<put-attribute name="body" value="/WEB-INF/jsp/expense/expenseDashBoard.jsp" />
+	</definition>
+
+	<definition name="expenseForm" extends="baseLayout">
+		<put-attribute name="title" value="Add Expense" />
+		<put-attribute name="body" value="/WEB-INF/jsp/expense/expenseForm.jsp" />
+	</definition>
+
+	<definition name="uploadForm" extends="baseLayout">
+		<put-attribute name="title" value="Upload" />
+		<put-attribute name="body" value="/WEB-INF/jsp/expense/uploadExpense.jsp" />
+	</definition>
+
+	<definition name="exportForm" extends="baseLayout">
+		<put-attribute name="title" value="Export" />
+		<put-attribute name="body" value="/WEB-INF/jsp/expense/exportExpenses.jsp" />
+	</definition>
+	
+	<definition name="settings" extends="baseLayout">
+		<put-attribute name="title" value="Settings" />
+		<put-attribute name="body" value="/WEB-INF/jsp/expense/settings.jsp" />
+	</definition>
+	
+	<definition name="userAppSettingsForm" extends="baseLayout">
+		<put-attribute name="title" value="App Settings" />
+		<put-attribute name="body" value="/WEB-INF/jsp/expense/userAppSettings.jsp" />
+	</definition>
+	
+	<definition name="forecastExpenseForm" extends="baseLayout">
+		<put-attribute name="title" value="Forecast Your Expenses" />
+		<put-attribute name="body" value="/WEB-INF/jsp/expense/forecast.jsp" />
+	</definition>
+	
+	<definition name="financialStatus" extends="baseLayout">
+		<put-attribute name="title" value="ui.exp.financialStatus.page.title" />
+		<put-attribute name="body" value="/WEB-INF/jsp/expense/financialStatus.jsp" />
+	</definition>
+</tiles-definitions>

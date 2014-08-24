@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+		
+		<util:properties id="propPageElementsMapping" location="classpath:/com/pk/et/web/pages/pageElementsMapping.properties" />
+		
+		<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+			<!-- Next value is the full qualified name of the static setter including method name -->
+			<property name="staticMethod" value="com.pk.et.infra.util.test.PageObject.setPageElementsMappings" />
+			<property name="arguments">
+				<list>
+					<!-- This is the bean name that holds database-settings.properties -->
+					<ref bean="propPageElementsMapping" />
+				</list>
+			</property>
+		</bean>
+
+</beans>

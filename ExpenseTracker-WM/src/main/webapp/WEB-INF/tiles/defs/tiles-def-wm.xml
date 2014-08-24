@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+       "http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+
+<tiles-definitions>
+
+	<!-- Wealth Management section -->
+	
+	<definition name="stockForm" extends="baseLayout">
+		<put-attribute name="title" value="add equity" />
+		<put-attribute name="body" value="/WEB-INF/jsp/wm/addEquity.jsp" />
+	</definition>
+	
+	<definition name="live" extends="baseLayout">
+		<put-attribute name="title" value="Stock Watch List" />
+		<put-attribute name="body" value="/WEB-INF/jsp/wm/watchlist.jsp" />
+	</definition>
+	
+	<definition name="portfolioForm" extends="baseLayout">
+		<put-attribute name="title" value="New Portfolio" />
+		<put-attribute name="body" value="/WEB-INF/jsp/wm/addPortfolio.jsp" />
+	</definition>
+	
+	<definition name="portfolios" extends="baseLayout">
+		<put-attribute name="title" value="My portfolio" />
+		<put-attribute name="body" value="/WEB-INF/jsp/wm/portfolios.jsp" />
+	</definition>
+	
+	
+	<!-- Admin section -->
+	
+	<definition name="proxyForm" extends="baseLayout">
+		<put-attribute name="title" value="Proxy" />
+		<put-attribute name="body" value="/WEB-INF/jsp/admin/proxysettings.jsp" />
+	</definition>
+	
+	<definition name="setupStockForm" extends="baseLayout">
+		<put-attribute name="title" value="Fetch Stock" />
+		<put-attribute name="body" value="/WEB-INF/jsp/admin/fetchStock.jsp" />
+	</definition>
+	
+	<definition name="brokerageForm" extends="baseLayout">
+		<put-attribute name="title" value="Brokerage Structure" />
+		<put-attribute name="body" value="/WEB-INF/jsp/admin/brokerageForm.jsp" />
+	</definition>
+
+</tiles-definitions>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+			http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+			http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+			http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<!-- <context:property-placeholder location="classpath:config/configurations.properties" 
+		/> -->
+
+	<context:annotation-config />
+
+	<!-- <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"> -->
+	<!-- <property name="url" -->
+	<!-- value="jdbc:mysql://${jdbc.host}:${jdbc.port}/${jdbc.database}" /> -->
+	<!-- <property name="username" value="${jdbc.username}" /> -->
+	<!-- <property name="password" value="${jdbc.password}" /> -->
+	<!-- <property name="driverClassName" value="${jdbs.driver}" /> -->
+	<!-- </bean> -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="url" value="#{dbConf['jdbc.url']}" />
+		<property name="username" value="#{dbConf['jdbc.username']}" />
+		<property name="password" value="#{dbConf['jdbc.password']}" />
+		<property name="driverClassName" value="#{dbConf['jdbc.driver']}" />
+
+	</bean>
+
+	<!-- <bean id="dataSource" -->
+	<!-- class="org.springframework.jdbc.datasource.DriverManagerDataSource"> -->
+	<!-- <property name="driverClassName" value="org.h2.Driver" /> -->
+	<!-- <property name="url" value="jdbc:h2:mem:test;DB_CLOSE_DELAY=-1" /> -->
+	<!-- </bean> -->
+	<!-- <bean class="org.springframework.orm.jpa.support.PersistenceAnnotationBeanPostProcessor"/> -->
+	<!-- Database initializer. If any of the script fails, the initialization 
+		stops -->
+
+
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="jpaVendorAdapter">
+			<bean
+				class="org.springframework.orm.jpa.vendor.EclipseLinkJpaVendorAdapter">
+				<!-- <property name="databasePlatform" value="MySQL" /> -->
+				<property name="generateDdl" value="false" />
+				<property name="showSql" value="true" />
+			</bean>
+		</property>
+		<property name="persistenceXmlLocation" value="classpath:META-INF/persistence.xml" />
+		<property name="persistenceUnitName" value="ExpenseTracker" />
+		<property name="jpaProperties" ref="jpaProperties" />
+	</bean>
+
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager"
+		p:entityManagerFactory-ref="entityManagerFactory" />
+
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	
+	<beans profile="dev,prod">
+		<bean id="infraInit" class="com.pk.et.infra.init.InfraInit"/>
+	</beans>
+	
+	<beans profile="dev">
+		<jdbc:initialize-database data-source="dataSource"
+			enabled="true" ignore-failures="ALL">
+			<jdbc:script
+				location="classpath:/org/springframework/batch/core/schema-drop-mysql.sql" />
+			<jdbc:script
+				location="classpath:/org/springframework/batch/core/schema-mysql.sql" />
+		</jdbc:initialize-database>
+	</beans>
+	
+	<bean id="restTemplate" class="org.springframework.web.client.RestTemplate"/>
+</beans>

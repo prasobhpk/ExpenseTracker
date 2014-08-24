@@ -1,0 +1,95 @@
+/**
+ * 
+ */
+package sgcib.clips.reporting;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import sgcib.clips.domain.MarkToMarket;
+import sgcib.clips.domain.Position;
+import sgcib.clips.domain.ProductUnderlying;
+import sgcib.clips.domain.ProductUnderlyingPricingParameter;
+import sgcib.clips.domain.Trades;
+import sgcib.clips.shared.domain.ReportableDataEntity;
+import sgcib.clips.shared.domain.ReportableDataEntityVisitor;
+
+/**
+ * Given a position and a target entity class, accessor to the associated target
+ * object. E.g. given a position instance & product entity class, accessor to
+ * the product associated to the position.
+ * 
+ */
+@Component
+public class PositionAccessorReportableDataEntityVisitor implements ReportableDataEntityVisitor<Object, Position> {
+
+	@Override
+	public Object visitProduct(final ReportableDataEntity reportableDataEntity, final Position position) {
+		return position.getProduct();
+	}
+
+	@Override
+	public Object visitPosition(final ReportableDataEntity reportableDataEntity, final Position position) {
+		return position;
+	}
+
+	@Override
+	public Object visitMarkToMarker(final ReportableDataEntity reportableDataEntity, final Position position) {
+		MarkToMarket mtm = null;
+		final List<MarkToMarket> mtmList = position.getListMarkToMarkets();
+		if (mtmList != null && mtmList.size() == 1) {
+			mtm = mtmList.get(0);
+		} else if (mtmList.size() > 1) {
+			throw new ReportingException("Too many mark to market for the position : " + position.getId().getValue());
+		}
+		return mtm;
+	}
+
+	@Override
+	public Object visitProductPrice(final ReportableDataEntity reportableDataEntity, final Position position) {
+		MarkToMarket markToMarketForReport = position.getMarkToMarketForReport();
+		if (markToMarketForReport == null) {
+			return null;
+		} else {
+			return position.getProduct().getProductPriceForReportInCaseOfPositionLoading(
+					markToMarketForReport.getValuationDate());
+		}
+	}
+
+	@Override
+	public Object visitTrades(final ReportableDataEntity reportableDataEntity, final Position position) {
+		Trades trade = null;
+		final List<Trades> tradesList = position.getListTrades();
+		if (tradesList.size() == 1) {
+			trade = tradesList.get(0);
+		} else if (tradesList.size() > 1) {
+			throw new ReportingException("Too many trades for the position : " + position.getId().getValue());
+		}
+		return trade;
+	}
+
+	@Override
+	public Object visitUnderlyings(final ReportableDataEntity reportableDataEntity, final Position position) {
+		return position.getProduct().getUnderlyings();
+	}
+
+	@Override
+	public Object visitProductUnderlyingPricingParameter(final ReportableDataEntity reportableDataEntity,
+			final Position position) {
+		final List<ProductUnderlyingPricingParameter> productUnderlyingPricingParameters = new ArrayList<ProductUnderlyingPricingParameter>();
+		final List<ProductUnderlying> productUnderlyings = position.getProduct().getProductUnderlyings();
+		for (final ProductUnderlying productUnderlying : productUnderlyings) {
+			final ProductUnderlyingPricingParameter parameter = productUnderlying
+					.getProductUnderlyingPricingParameterForReportInCaseOfPositionLoading(position
+							.getMarkToMarketForReport().getValuationDate());
+			if (parameter != null) {
+				productUnderlyingPricingParameters.add(parameter);
+			}
+		}
+		return Collections.unmodifiableList(productUnderlyingPricingParameters);
+	}
+
+}

@@ -1,0 +1,187 @@
+package sgcib.clips.domain;
+
+import static com.google.common.collect.Sets.newHashSet;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.EntityManager;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
+import org.springframework.transaction.annotation.Transactional;
+
+import sgcib.clips.shared.domain.Locale;
+import sgcib.clips.shared.domain.MessageId;
+
+@Entity
+@Table(name = "MESSAGE")
+@NamedQueries({
+		@NamedQuery(name = Message.FIND_MESSAGE_IDS_BY_CONTEXTS, query = "select msg.id from Message msg where msg.id.key2 in (:contexts)"),
+		@NamedQuery(name = Message.FIND_MESSAGES_BY_IDS, query = "from Message msg where id in (:ids)") })
+@Audited
+public class Message extends BaseJPAEntity<MessageId> {
+
+	/**
+	 * A request for find message ids by contexts.
+	 */
+	public static final String FIND_MESSAGE_IDS_BY_CONTEXTS = "FIND_MESSAGE_IDS_BY_CONTEXTS";
+
+	public static final String FIND_MESSAGES_BY_IDS = "FIND_MESSAGES_BY_IDS";
+
+	@EmbeddedId
+	@AttributeOverrides({ @AttributeOverride(name = "key1", column = @Column(name = "KEY1", nullable = false)),
+			@AttributeOverride(name = "key2", column = @Column(name = "KEY2", nullable = false)) })
+	private MessageId id;
+
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "TEMPLATE_MESSAGES", joinColumns = {
+			@JoinColumn(name = "KEY1", nullable = false, updatable = false),
+			@JoinColumn(name = "KEY2", nullable = false, updatable = false) }, inverseJoinColumns = { @JoinColumn(name = "TEMPLATE", updatable = false) })
+	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+	private List<Template> templates;
+
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "message", cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	private List<MessageText> messageTexts;
+
+	public Message() {
+	}
+
+	public Message(final MessageId id) {
+		this.id = id;
+	}
+
+	@Override
+	public MessageId getId() {
+		return this.id;
+	}
+
+	@Override
+	public void setId(final MessageId id) {
+		this.id = id;
+	}
+
+	public List<Template> getTemplates() {
+		return this.templates;
+	}
+
+	public void setTemplates(final List<Template> customTemplates) {
+		this.templates = customTemplates;
+	}
+
+	/**
+	 * Create Message.
+	 * 
+	 * @return A new Message.
+	 */
+	public static Message create() {
+		final Message message = new Message();
+		message.templates = new ArrayList<Template>();
+		return message;
+	}
+
+	public static Message create(final MessageId id) {
+		final Message message = new Message();
+		message.id = id;
+		message.templates = new ArrayList<Template>();
+		return message;
+	}
+
+	public static Message create(final String key1) {
+		return Message.create(key1, MessageId.DEFAULT_KEY2_VALUE);
+	}
+
+	public static Message create(final String key1, final String key2) {
+		final MessageId messageId = MessageId.create(key1, key2);
+		return Message.create(messageId);
+	}
+
+	@Override
+	public String toString() {
+		return "Message [id=" + this.id + ", customTemplates=" + this.templates + "]";
+	}
+
+	public void addTemplate(final Template template) {
+		if (!this.templates.contains(template)) {
+			this.templates.add(template);
+		}
+	}
+
+	public void removeTemplate(final Template template) {
+		this.templates.remove(template);
+	}
+
+	public void setMessageTexts(final List<MessageText> messageTexts) {
+		this.messageTexts = messageTexts;
+	}
+
+	public List<MessageText> getMessageTexts() {
+		return this.messageTexts;
+	}
+
+	public MessageText getTextByLocale(final Locale locale) {
+		for (final MessageText messageText : this.messageTexts) {
+			if (messageText.getLocale().equals(locale)) {
+				return messageText;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Find all message ids that belong to the given context.
+	 * 
+	 * @param context
+	 *            the context to consider.
+	 * @return all the message ids found.
+	 */
+	@SuppressWarnings("unchecked")
+	@Transactional
+	public static List<MessageId> findMessageIdsByContext(final EntityManager entityManager, final String context) {
+		final List<MessageId> messageIds = entityManager.createNamedQuery(Message.FIND_MESSAGE_IDS_BY_CONTEXTS)
+				.setParameter("contexts", newHashSet(context)).getResultList();
+		return messageIds;
+	}
+
+	/**
+	 * Find all message ids that belong to the given contexts.
+	 * 
+	 * @param context
+	 *            the context to consider.
+	 * @return all the message ids found.
+	 */
+	@SuppressWarnings("unchecked")
+	public static Set<MessageId> findMessageIdsByContexts(final EntityManager entityManager, final Set<String> contexts) {
+		if (contexts.isEmpty()) {
+			return Collections.emptySet();
+		}
+		final List<MessageId> messageIds = entityManager.createNamedQuery(Message.FIND_MESSAGE_IDS_BY_CONTEXTS)
+				.setParameter("contexts", contexts).getResultList();
+		return newHashSet(messageIds);
+	}
+
+	public static Set<Message> findMessages(final EntityManager entityManager, final Set<MessageId> ids) {
+		if (ids.isEmpty()) {
+			return Collections.emptySet();
+		}
+		final List<Message> messages = entityManager.createNamedQuery(Message.FIND_MESSAGES_BY_IDS, Message.class)
+				.setParameter("ids", ids).getResultList();
+		return newHashSet(messages);
+	}
+}

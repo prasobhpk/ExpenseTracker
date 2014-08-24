@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings version="2.5"
+	xmlns="http://www.eclipse.org/eclipselink/xsds/persistence/orm"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.eclipse.org/eclipselink/xsds/persistence/orm org/eclipse/persistence/jpa/eclipselink_orm_2_5.xsd">
+	<!-- <table-generator name="_GEN" table="ID_GEN" pk-column-name="ID_NAME" 
+		value-column-name="ID_VAL" pk-column-value="_SEQ" allocation-size="100" /> -->
+
+	<table-generator name="WM_PARAMS_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="WM_PARAMS_SEQ"
+		allocation-size="100" />
+		
+	<table-generator name="CONFIG_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="CONFIG_SEQ"
+		allocation-size="100" />
+		
+	<table-generator name="AUTH_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="AUTH_SEQ"
+		allocation-size="100" />
+		
+	<table-generator name="EXTENSION_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="EXTENSION_SEQ"
+		allocation-size="100" />
+		
+	<table-generator name="EXTN_VAL_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="EXTN_VAL_SEQ"
+		allocation-size="100" />
+		
+		
+	<table-generator name="CONFIG_ITEM_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="CONFIG_ITEM_SEQ"
+		allocation-size="100" />
+		
+	<table-generator name="SESSION_REGISTRY_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="SESSION_REGISTRY_SEQ"
+		allocation-size="100" />
+		
+	<table-generator name="USER_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="USER_SEQ"
+		allocation-size="100" />
+	
+	<table-generator name="JOB_UNIQ_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="JOB_UNIQ_SEQ"
+		allocation-size="100" />
+	<converter class="com.pk.et.infra.jpa.converter.JodaDateTimeConverter" auto-apply="true"/>
+
+</entity-mappings>

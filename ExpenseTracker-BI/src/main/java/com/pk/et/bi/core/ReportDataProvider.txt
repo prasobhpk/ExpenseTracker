@@ -1,0 +1,205 @@
+package sgcib.clips.reporting;
+
+import static com.google.common.collect.Maps.newHashMap;
+import static com.google.common.collect.Sets.newHashSet;
+
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.inject.Inject;
+
+import org.springframework.stereotype.Component;
+
+import sgcib.clips.domain.Position;
+import sgcib.clips.domain.Product;
+import sgcib.clips.domain.ReportableData;
+import sgcib.clips.domain.ReportableDataField;
+import sgcib.clips.domain.ReportableDataFields;
+import sgcib.clips.shared.domain.ProductType;
+import sgcib.clips.shared.domain.ReportableDataEntity;
+import sgcib.clips.shared.domain.ReportableDataEntityVisitor;
+
+/**
+ * An helper for retrieve data for the report.
+ */
+@Component
+public class ReportDataProvider {
+
+	private final EntityClassMapperReportableDataEntityVisitor entityClassMapperVisitor;
+	private final PositionAccessorReportableDataEntityVisitor positionAccessorVisitor;
+	private final ProductAccessorReportableDataEntityVisitor productAccessorVisitor;
+
+	private final ReportableDataValueConverter valueConverter;
+
+	public Map<ReportableData, Map<ProductType, ReportableDataProperty>> REPORTABLE_DATA_PROPERTY_BY_DATA = newHashMap();
+
+	private abstract class PropertiesInitializer<AO extends AccessibleObject> {
+		protected abstract AO[] getAccessibleObjects(Class<?> clazz);
+
+		protected abstract ReportableDataProperty newReportableDataProperty(final AO accessibleObject);
+
+		public void init(final Set<Class<?>> classesAlreadyProcessed,
+				final Map<ReportableData, Map<ProductType, ReportableDataProperty>> propertyByDataAndProductType,
+				final ReportableDataEntity entity) {
+			final Class<?> entityClass = entity.accept(ReportDataProvider.this.entityClassMapperVisitor);
+
+			for (final AO accessibleObject : getAccessibleObjects(entityClass)) {
+				if (accessibleObject.isAnnotationPresent(ReportableDataFields.class)) {
+					for (final ReportableDataField dataField : accessibleObject.getAnnotation(
+							ReportableDataFields.class).value()) {
+						registerDataFieldOnEntity(dataField, entity, propertyByDataAndProductType, accessibleObject);
+					}
+				}
+
+				if (accessibleObject.isAnnotationPresent(ReportableDataField.class)) {
+					registerDataFieldOnEntity(accessibleObject.getAnnotation(ReportableDataField.class), entity,
+							propertyByDataAndProductType, accessibleObject);
+				}
+			}
+		}
+
+		private void registerDataFieldOnEntity(final ReportableDataField dataField, final ReportableDataEntity entity,
+				final Map<ReportableData, Map<ProductType, ReportableDataProperty>> propertyByDataAndProductType,
+				final AO accessibleObject) {
+			final String fieldId = dataField.fieldId();
+			final ReportableData data = ReportableData.create(entity, fieldId);
+			accessibleObject.setAccessible(true);
+			final ReportableDataProperty property = newReportableDataProperty(accessibleObject);
+
+			if (!propertyByDataAndProductType.containsKey(data)) {
+				propertyByDataAndProductType.put(data, new HashMap<ProductType, ReportableDataProperty>());
+			}
+			final Map<ProductType, ReportableDataProperty> propertyByProductType = propertyByDataAndProductType
+					.get(data);
+
+			final Collection<ProductType> includedTypes;
+			if (dataField.includeTypes().length == 0) {
+				includedTypes = newHashSet(ProductType.values());
+			} else {
+				includedTypes = newHashSet(dataField.includeTypes());
+			}
+			for (final ProductType excludedType : dataField.excludeTypes()) {
+				includedTypes.remove(excludedType);
+			}
+
+			for (final ProductType includedType : includedTypes) {
+				final ReportableDataProperty previousValue = propertyByProductType.put(includedType, property);
+				if (previousValue != null) {
+					throw new ReportingException(
+							"Mapping error: only one field/method could be mapped to the ReportableData " + data
+									+ " for product type " + includedType);
+				}
+			}
+		}
+	}
+
+	private class FieldPropertiesInitializer extends PropertiesInitializer<Field> {
+
+		@Override
+		protected Field[] getAccessibleObjects(final Class<?> clazz) {
+			return clazz.getDeclaredFields();
+		}
+
+		@Override
+		protected ReportableDataProperty newReportableDataProperty(final Field accessibleObject) {
+			return new FieldReportableDataProperty(accessibleObject);
+		}
+	}
+
+	private class MethodPropertiesInitializer extends PropertiesInitializer<Method> {
+		@Override
+		protected Method[] getAccessibleObjects(final Class<?> clazz) {
+			return clazz.getDeclaredMethods();
+		}
+
+		@Override
+		protected ReportableDataProperty newReportableDataProperty(final Method accessibleObject) {
+			return new MethodReportableDataProperty(accessibleObject);
+		}
+	}
+
+	@Inject
+	public ReportDataProvider(final EntityClassMapperReportableDataEntityVisitor entityClassMapperVisitor,
+			final PositionAccessorReportableDataEntityVisitor positionAccessorVisitor,
+			final ProductAccessorReportableDataEntityVisitor productAccessorVisitor,
+			final ReportableDataValueConverter valueConverter) {
+		this.entityClassMapperVisitor = entityClassMapperVisitor;
+		this.positionAccessorVisitor = positionAccessorVisitor;
+		this.productAccessorVisitor = productAccessorVisitor;
+		this.valueConverter = valueConverter;
+
+		final Set<Class<?>> classesFieldsAlreadyProcessed = new HashSet<Class<?>>();
+		final FieldPropertiesInitializer fieldInit = new FieldPropertiesInitializer();
+		final Set<Class<?>> classesMethodsAlreadyProcessed = new HashSet<Class<?>>();
+		final MethodPropertiesInitializer methodInit = new MethodPropertiesInitializer();
+		for (final ReportableDataEntity entity : ReportableDataEntity.values()) {
+			fieldInit.init(classesFieldsAlreadyProcessed, this.REPORTABLE_DATA_PROPERTY_BY_DATA, entity);
+			methodInit.init(classesMethodsAlreadyProcessed, this.REPORTABLE_DATA_PROPERTY_BY_DATA, entity);
+		}
+	}
+
+	private <PARAM_TYPE> Object retrieveReportDataValue(final PARAM_TYPE objectToReport,
+			final ReportableData reportableData, final ProductType productType,
+			final ReportableDataEntityVisitor<Object, PARAM_TYPE> dataEntityVisitor) {
+		final Object target = reportableData.getEntity().accept(dataEntityVisitor, objectToReport);
+		final Map<ProductType, ReportableDataProperty> propertiesByProductType = this.REPORTABLE_DATA_PROPERTY_BY_DATA
+				.get(reportableData);
+		if (propertiesByProductType == null) {
+			throw new ReportingException("Reportable data not mapped " + reportableData);
+		}
+
+		final ReportableDataProperty property = propertiesByProductType.get(productType);
+
+		final Object returnValue;
+		if (property == null) {
+			returnValue = null;
+		} else if (target instanceof List<?>) {
+			final List<?> valueItems = (List<?>) target;
+			final List<Object> valuesList = new ArrayList<Object>();
+			for (final Object valueItem : valueItems) {
+				valuesList.add(valueItem);
+			}
+			returnValue = this.valueConverter.convert(property.getValue(valuesList));
+		} else {
+			returnValue = this.valueConverter.convert(property.getValue(target));
+		}
+		return returnValue;
+	}
+
+	/**
+	 * Retrieve the report data value for a given {@link Position} and a given
+	 * {@link ReportableData}
+	 * 
+	 * @param position
+	 *            the position to consider.
+	 * @param reportableData
+	 *            the reportable data to consider.
+	 * @return the value found.
+	 */
+	public Object retrieveReportDataValue(final Position position, final ReportableData reportableData) {
+		return retrieveReportDataValue(position, reportableData, position.getProductType(),
+				this.positionAccessorVisitor);
+	}
+
+	/**
+	 * Retrieve the report data value for a given {@link Product} and a given
+	 * {@link ReportableData}
+	 * 
+	 * @param product
+	 *            the product to consider.
+	 * @param reportableData
+	 *            the reportable data to consider.
+	 * @return the value found.
+	 */
+	public Object retrieveReportDataValue(final Product product, final ReportableData reportableData) {
+		return retrieveReportDataValue(product, reportableData, product.getProductType(), this.productAccessorVisitor);
+	}
+}

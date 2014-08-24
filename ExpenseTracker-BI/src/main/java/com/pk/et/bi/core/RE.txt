@@ -1,0 +1,1226 @@
+package sgcib.clips.reporting;
+
+import static sgcib.clips.shared.domain.FileFormat.FILE_BASENAME_EXTENSION_SEPARATOR;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import org.eclipse.birt.report.model.api.activity.SemanticException;
+import org.eclipse.birt.report.model.api.elements.DesignChoiceConstants;
+import org.eclipse.birt.report.model.elements.interfaces.IStyleModel;
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import sgcib.clips.chain.ReportingFiltering;
+import sgcib.clips.core.FileHelper;
+import sgcib.clips.domain.Channel;
+import sgcib.clips.domain.Failure;
+import sgcib.clips.domain.GenerationAction;
+import sgcib.clips.domain.ReportParametrization;
+import sgcib.clips.domain.ReportingJob;
+import sgcib.clips.domain.Subscription;
+import sgcib.clips.domain.Template;
+import sgcib.clips.domain.TemplateColumn;
+import sgcib.clips.domain.TemplateColumnAlignment;
+import sgcib.clips.domain.TemplateColumnParametrization;
+import sgcib.clips.domain.TemplateGridParametrization;
+import sgcib.clips.reporting.ReportingService.DesignContext;
+import sgcib.clips.reporting.ReportingService.ReportDataSet;
+import sgcib.clips.reporting.ReportingService.ReportGrid;
+import sgcib.clips.reporting.ReportingService.ReportItem;
+import sgcib.clips.reporting.ReportingService.ReportStyle;
+import sgcib.clips.reporting.ReportingService.ReportTable;
+import sgcib.clips.reporting.ReportingService.ReportTableGroup;
+import sgcib.clips.reporting.ReportingService.ReportingTask;
+import sgcib.clips.reporting.ReportingServiceImpl.ReportingTaskImpl;
+import sgcib.clips.reporting.custom.CustomDataSetEventHandler;
+import sgcib.clips.reporting.custom.DFAColumnParametrizationAdder;
+import sgcib.clips.reporting.custom.ListDataSetEventHandler;
+import sgcib.clips.reporting.custom.RateCurveDataRow;
+import sgcib.clips.shared.domain.Currency;
+import sgcib.clips.shared.domain.FileFormat;
+import sgcib.clips.shared.domain.FrequencyType;
+import sgcib.clips.shared.domain.MessageId;
+import sgcib.clips.shared.domain.MtmType;
+import sgcib.clips.shared.domain.ProductType;
+import sgcib.clips.shared.domain.ReasonType;
+import sgcib.clips.shared.domain.ReportTheme;
+import sgcib.clips.shared.util.ClipsTechnicalException;
+import sgcib.clips.shared.util.StringUtil;
+import sgcib.clips.time.TimeProvider;
+import sgcib.clips.util.ApplicationRunTimeMonitor;
+import sgcib.clips.util.DateUtil;
+
+import com.google.common.annotations.VisibleForTesting;
+
+/**
+ * The report Engine class define the common part of the report generation
+ * process. A report engine gets a subscription as unique parameter and build
+ * the requested reports (more than one may be generated depending on the
+ * subscription definition).
+ * <p>
+ * IMPORTANT implementation note : the work object created by the engine is NOT
+ * persisted here ! This facilitates the testing of this class.
+ */
+@Service
+public class ReportEngine {
+
+	/**
+	 * An helper for retrieve rate curve datas.
+	 */
+	@Inject
+	private RetrieveRateCurveDataHelper retrieveRateCurveDataHelper;
+
+	/**
+	 * The separator to use when spliting a string into a list (or array)
+	 */
+	private static final String LIST_SEPARATOR = ",";
+
+	/**
+	 * Numeric format for {@link ReportDataType#STRING_CAN_BE_DECIMAL}: display
+	 * the digits with no thousand separator and no decimal part. This will give
+	 * the rendered data the look of a rendered String.
+	 */
+	private static final String NO_SEPARATOR_FORMAT = "#";
+
+	/**
+	 * A constant for "IsInPercentage"
+	 */
+	public static final String IS_IN_PERCENTAGE = "IsInPercentage";
+
+	/**
+	 * A constant for "Value"
+	 */
+	public static final String VALUE = "Value";
+
+	/**
+	 * A constant for "List"
+	 */
+	public static final String LIST = "List";
+
+	/**
+	 * A constant for "CrossValued"
+	 */
+	public static final String CROSS_VALUED = "CrossValued";
+
+	/**
+	 * Column for aggregation
+	 * 
+	 */
+	public static final String AGGRE_COLUMN = "AggreColumn";
+	/**
+	 * A constant for "Format"
+	 */
+	public static final String FORMAT = "Format";
+
+	/**
+	 * The clips data source name.
+	 */
+	private static final String CLIPS_DATA_SOURCE = "ClipsDataSource";
+
+	/**
+	 * The custom data set name.
+	 */
+	private static final String CUSTOM_DATA_SET_NAME = "customDataSetName";
+
+	/**
+	 * Style for all table header cells in case of custom reports.
+	 */
+	private static final String TABLE_HEADER_CELL_STYLE = "tableHeader";
+
+	/**
+	 * RGB code for red color.
+	 */
+	private static final String RGB_RED = "RGB(255,0,0)";
+
+	/**
+	 * The custom table name.
+	 */
+	private static final String CUSTOM_TABLE_NAME = "customTableName";
+
+	/**
+	 * The number of grid rows where we have to insert the custom table.
+	 */
+	private static final int GRID_NB_ROW_FOR_CUSTOM_TABLE = 8;
+
+	/**
+	 * The number of grid columns where we have to insert the custom table.
+	 */
+	private static final int GRID_NB_COLUMN_FOR_CUSTOM_TABLE = 1;
+
+	private static final String PATTERN_EXPRESSION = "\\{.*\\}";
+
+	/**
+	 * The number of pixel for the width of an A4 master page in landscape.
+	 */
+	private static final int A4_MASTER_PAGE_MAX_PIXEL_WIDTH = 1070;
+
+	/**
+	 * A margin for the master page.
+	 */
+	private static final int MASTER_PAGE_MARGIN = 50;
+
+	/**
+	 * The default column width for custom reports.
+	 */
+	@Value("${ra.custom.report.default.column.width}")
+	protected Integer defaultColumnWidth;
+
+	/**
+	 * The default date format for custom reports.
+	 */
+	@Value("${ra.custom.report.default.date.format}")
+	protected String defaultDateFormat;
+
+	/**
+	 * The default number format for custom reports.
+	 */
+	@Value("${ra.custom.report.default.number.format}")
+	protected String defaultNumberFormat;
+
+	/**
+	 * The percentage format for custom reports.
+	 */
+	@Value("${ra.custom.report.percentage.format}")
+	protected String percentageFormat;
+
+	/**
+	 * The list of fields that should always be hidden in reports
+	 */
+	@Value("${ra.custom.report.fields.hide.always}")
+	private String alwaysHiddenFieldsProperty;
+
+	/**
+	 * 
+	 */
+	protected List<String> alwaysHiddenFields;
+
+	/**
+	 * The logger.
+	 */
+	static final Logger LOG = LoggerFactory.getLogger(ReportEngine.class);
+
+	/**
+	 * Reporting service that control the access to BIRT engine (or a subbed
+	 * service :) )
+	 */
+	@Inject
+	protected ReportingService reportingService;
+
+	@Value("${output.path.report}")
+	String reportDirectoryName;
+
+	@Inject
+	protected TimeProvider timeProvider;
+
+	@PersistenceContext
+	public EntityManager entityManager;
+
+	private String dateFormatForReport;
+
+	/**
+	 * Aligns text in columns using BiRT constants
+	 */
+	private final AlignmentDefinition<ReportStyle> alignmentDefinition = new AlignmentDefinition<ReportStyle>() {
+		@Override
+		public void applyLeftTo(final ReportStyle target) {
+			target.setTextAlign(DesignChoiceConstants.TEXT_ALIGN_LEFT);
+		}
+
+		@Override
+		public void applyCenterTo(final ReportStyle target) {
+			target.setTextAlign(DesignChoiceConstants.TEXT_ALIGN_CENTER);
+
+		}
+
+		@Override
+		public void applyRightTo(final ReportStyle target) {
+			target.setTextAlign(DesignChoiceConstants.TEXT_ALIGN_RIGHT);
+		}
+	};
+
+	/**
+	 * @return the default column width for custom reports.
+	 */
+	public Integer getDefaultColumnWidth() {
+		return this.defaultColumnWidth;
+	}
+
+	/**
+	 * @return the default date format for custom reports.
+	 */
+	public String getDefaultDateFormat() {
+		return this.defaultDateFormat;
+	}
+
+	/**
+	 * @return the default number format for custom reports.
+	 */
+	public String getDefaultNumberFormat() {
+		return this.defaultNumberFormat;
+	}
+
+	/**
+	 * Builds the report file (THE xls, pdf and so on file which presents
+	 * financial Data).
+	 * 
+	 * @param work
+	 *            work representing the current execution of a subscription
+	 * @param task
+	 *            Birt generation task
+	 * @param genFileName
+	 *            name of the file to producte (including path but excluding
+	 *            extension).
+	 * @param format
+	 *            format of the file to produce (XLS, PDF, etc.)
+	 * @param genAction
+	 *            entity that traces the current generation action.
+	 */
+	protected boolean generateReportFile(final ReportingTask task, final String genFileName, final String userFileName,
+			final GenerationFormat generationFormat, final GenerationAction genAction) {
+		try {
+			LOG.info("Begin generateReportFile for userFileName {} : Used Memory {} MB", new Object[] { userFileName,
+					ApplicationRunTimeMonitor.getUsedHeapMemoryInMBs() });
+			final FileFormat format = generationFormat.getFileFormat();
+			final String completeFileName = genFileName + FILE_BASENAME_EXTENSION_SEPARATOR + format.getValue();
+			genAction.setFileName(completeFileName);
+			if (userFileName != null) {
+				genAction.setUserFileName(userFileName + FILE_BASENAME_EXTENSION_SEPARATOR + format.getValue());
+			}
+
+			if (FileFormat.PDF.equals(format)) {
+				this.reportingService.renderPdf(task, completeFileName);
+			} else if (FileFormat.XLS.equals(format)) {
+				this.reportingService.renderExcel(task, completeFileName);
+			} else if (FileFormat.CSV.equals(format)) {
+				this.reportingService.renderCsv(completeFileName);
+			} else if (FileFormat.TXT.equals(format)) {
+				this.reportingService.renderTxt(completeFileName);
+			} else if (FileFormat.XML.equals(format)) {
+				final boolean applyXslt = generationFormat.isApplyXslt();
+				this.reportingService.renderTemplateXml(completeFileName, applyXslt);
+			} else {
+				genAction.setReason(format.getReasonIfNotSupported());
+			}
+			LOG.info("End generateReportFile for userFileName {} : Used Memory {} MB", new Object[] { userFileName,
+					ApplicationRunTimeMonitor.getUsedHeapMemoryInMBs() });
+
+			return true;
+		} catch (final ReportingException exception) {
+			LOG.error("Error when processing for genFileName=" + genFileName + " exception = ", exception);
+			genAction.setReason(ReasonType.BIRT_EXCEPTION);
+			return false;
+		}
+	}
+
+	protected File createTemplateFileToCustomize(final Template template) {
+		File returnFile = null;
+		final InputStream templateStream = getClass().getResourceAsStream("/reports/" + template.getFileName());
+		if (templateStream != null) {
+			final String convertStreamToString = FileHelper.convertStreamToString(templateStream);
+			try {
+				returnFile = File.createTempFile("custom_template", ".xml");
+				FileHelper.writeUtf8WithoutBom(returnFile, convertStreamToString);
+			} catch (final IOException exc) {
+				throw new ClipsTechnicalException("Unable to create a temporary file to customize the template", exc);
+			}
+		}
+		return returnFile;
+	}
+
+	public File prepareTemplate(final Subscription subscription, final ReportParametrization reportParametrization,
+			final LocalDate valuationDate) {
+		File customizeTemplateFile;
+		if (this.alwaysHiddenFieldsProperty != null && this.alwaysHiddenFieldsProperty.length() > 0) {
+			this.alwaysHiddenFields = new ArrayList<String>();
+			Collections.addAll(this.alwaysHiddenFields, this.alwaysHiddenFieldsProperty.split(LIST_SEPARATOR));
+		}
+		try {
+			final Currency subscriptionCurrency = subscription.getTemplateSpecification().getCurrency();
+			final String dateFormat = StringUtil.isEmpty(subscription.getTemplateSpecification().getDateFormat()) ? getDefaultDateFormat()
+					: subscription.getTemplateSpecification().getDateFormat();
+			setDateFormatForReport(dateFormat);
+			customizeTemplateFile = loadTemplateContextAndCustomizeIfNecessary(reportParametrization,
+					subscriptionCurrency, valuationDate);
+		} catch (final SemanticException exc) {
+			throw new ReportingException(exc);
+		} catch (final RuntimeException exc) {
+			throw new ReportingException(exc);
+		}
+		return customizeTemplateFile;
+	}
+
+	private void prepareAction(final Subscription subscription, final ReportParametrization reportParametrization,
+			final LocalDate valuationDate, final MtmType mtmType, final FrequencyType scheduleType) {
+		final ReportAction action = retrieveAction(reportParametrization.getTemplateParametrization().getTemplate());
+		ActionManager.setCurrentAction(action);
+		if (subscription.isCorporateActionSubscription()) {
+			throw new ClipsTechnicalException("Functionality not yet implemented");
+		} else {
+			final ReportActionImpl actionImpl = (ReportActionImpl) action;
+			actionImpl.prepare(this.entityManager, subscription, reportParametrization, valuationDate, mtmType,
+					scheduleType, this.timeProvider,
+					new DFAColumnParametrizationAdder(reportParametrization.getProductType()));
+		}
+
+	}
+
+	/*****************************/
+	/* Prepare Custom Action end */
+
+	public File loadTemplateContextAndCustomizeIfNecessary(final ReportParametrization reportParametrization,
+			final Currency subscriptionCurrency, final LocalDate valuationDate) throws SemanticException {
+		final Template template = reportParametrization.getTemplateParametrization().getTemplate();
+		final File templateFile = createTemplateFileToCustomize(template);
+
+		if (templateFile != null) {
+			final DesignContext ctx = this.reportingService.openDesign(templateFile.getPath());
+			if (template.isCustom()) {
+				ctx.defineReportTheme(reportParametrization.getReportTheme().getDisplayedLabel());
+				for (final TemplateGridParametrization gridParam : reportParametrization.getTemplateParametrization()
+						.getGrids()) {
+					processGrid(ctx, gridParam, reportParametrization.getProductType(), subscriptionCurrency,
+							reportParametrization.getReportTheme());
+				}
+				manageRateCurves(reportParametrization, valuationDate, ctx);
+			}
+			ctx.saveDesign();
+		}
+		return templateFile;
+	}
+
+	void processGrid(final DesignContext ctx, final TemplateGridParametrization gridParam,
+			final ProductType productType, final Currency subscriptionCurrency, final ReportTheme reportTheme)
+			throws SemanticException {
+
+		final List<TemplateColumnParametrization> templateColumnParametrizations = gridParam
+				.getColumns(new DFAColumnParametrizationAdder(productType));
+
+		int nbColumns = 0;
+		final List<TemplateColumnParametrization> visibleTemplateColumnParametrizations = new ArrayList<TemplateColumnParametrization>();
+		for (final TemplateColumnParametrization templateColumnParametrization : templateColumnParametrizations) {
+			if (!templateColumnParametrization.isHideColumn() && this.alwaysHiddenFields == null
+					|| !this.alwaysHiddenFields.contains(templateColumnParametrization.getColumn().getName())) {
+				nbColumns++;
+				visibleTemplateColumnParametrizations.add(templateColumnParametrization);
+			}
+		}
+
+		if (!visibleTemplateColumnParametrizations.isEmpty()) {
+			final Integer widthFirstColumn = visibleTemplateColumnParametrizations.get(0).getColumn().getWidth();
+			manageGridFirstColumnWidth(ctx, "clientGrid", widthFirstColumn);
+			manageTableColumnWidth(ctx, "forexRateTable", 0, widthFirstColumn);
+			if (1 < visibleTemplateColumnParametrizations.size()) {
+				manageTableColumnWidth(ctx, "forexRateTable", 1, visibleTemplateColumnParametrizations.get(1)
+						.getColumn().getWidth());
+			}
+		}
+
+		boolean haveGroups = false;
+		if (gridParam.getGroupingColumn() != null) {
+			haveGroups = true;
+		}
+
+		final ReportTable customTable = createTableAndAddItToAGrid(ctx, CUSTOM_TABLE_NAME, nbColumns,
+				GRID_NB_ROW_FOR_CUSTOM_TABLE, GRID_NB_COLUMN_FOR_CUSTOM_TABLE, reportTheme, haveGroups);
+
+		final ReportStyle evenStyle = ctx.findStyle("even");
+		final ReportStyle oddStyle = ctx.findStyle("odd");
+		customTable.addHighLightRules(evenStyle, oddStyle);
+
+		final Map<String, ReportDataType> reportDataTypeByColumnName = new HashMap<String, ReportDataType>();
+		final List<ColumnDefinition> columnDefinitions = buildColumnDefinitionsFromTemplateColumnParametrizations(
+				templateColumnParametrizations, productType, reportDataTypeByColumnName);
+		if (gridParam.getTotalAmountColumn() != null && gridParam.getTotalCurrencyColumn() != null) {
+			final ColumnDefinition columnDefinitionCrossValued = new ColumnDefinition();
+			columnDefinitionCrossValued.setName(gridParam.getTotalAmountColumn().getName() + CROSS_VALUED);
+			columnDefinitionCrossValued.setDataType(ReportDataType.DECIMAL);
+			columnDefinitions.add(columnDefinitionCrossValued);
+
+			final ColumnDefinition columnDefinitionAggreColumn = new ColumnDefinition();
+			columnDefinitionAggreColumn.setName(gridParam.getTotalAmountColumn().getName() + AGGRE_COLUMN);
+			columnDefinitionAggreColumn.setDataType(ReportDataType.DECIMAL);
+			columnDefinitions.add(columnDefinitionAggreColumn);
+
+			final ColumnDefinition columnDefinitionAggreColumnCurr = new ColumnDefinition();
+			columnDefinitionAggreColumnCurr.setName(gridParam.getTotalCurrencyColumn().getName() + AGGRE_COLUMN);
+			columnDefinitionAggreColumnCurr.setDataType(ReportDataType.STRING);
+			columnDefinitions.add(columnDefinitionAggreColumnCurr);
+		}
+
+		final ReportDataSet reportDataSet = ctx.createDataSetsWithEventHandlerClass(CLIPS_DATA_SOURCE,
+				CUSTOM_DATA_SET_NAME, columnDefinitions, CustomDataSetEventHandler.class.getName());
+
+		customTable.bindDataSet(CUSTOM_DATA_SET_NAME, reportDataSet);
+
+		bindAllTableColumns(ctx, reportDataTypeByColumnName, templateColumnParametrizations, customTable);
+
+		final int totalColumnWidth = manageTableColumnWidth(templateColumnParametrizations, customTable);
+
+		manageMasterPageWidth(ctx, totalColumnWidth);
+
+		manageTableOrder(gridParam, customTable);
+
+		int columnIndex = 0;
+		final Map<TemplateColumn, Integer> indexForTemplateColumns = new HashMap<TemplateColumn, Integer>();
+		for (final TemplateColumnParametrization templateColumnParametrization : templateColumnParametrizations) {
+			if (!templateColumnParametrization.isHideColumn() && this.alwaysHiddenFields == null
+					|| !this.alwaysHiddenFields.contains(templateColumnParametrization.getColumn().getName())) {
+				indexForTemplateColumns.put(templateColumnParametrization.getColumn(), columnIndex);
+				columnIndex++;
+			}
+		}
+
+		final ReportStyle footerBordersStyle = ctx.createStyle();
+		footerBordersStyle.addSolidBottomBorder(1);
+		footerBordersStyle.addSolidTopBorder(1);
+		if (haveGroups) {
+			final ReportTableGroup tableGroup = customTable.addAGroup(gridParam.getGroupingColumn().getName());
+			if (gridParam.isSubtotalDisplayed() && gridParam.getTotalAmountColumn() != null
+					&& gridParam.getTotalCurrencyColumn() != null) {
+
+				tableGroup.addFooter(nbColumns, footerBordersStyle, -1);
+
+				final String groupName = tableGroup.getName();
+
+				customTable.addSumAggregationOnGroup("aggregationForTotalAmountGroup", gridParam.getTotalAmountColumn()
+						.getName() + AGGRE_COLUMN, groupName);
+
+				final Integer indexTotalColumn = indexForTemplateColumns.get(gridParam.getTotalAmountColumn());
+
+				if (reportTheme.isDisplayTotalLabelInGroupFooter()) {
+					final ReportStyle totalLabelCellStyle = createReportStyleCenterBold(ctx);
+					final ReportItem totalLabel = ctx.createLabel("Total");
+					tableGroup.addReportItemInTableGroupFooter(totalLabel, indexTotalColumn - 1, totalLabelCellStyle);
+				}
+
+				final ReportStyle subTotalCellStyle = createSpecificStyleForTableDetailSumCell(ctx,
+						gridParam.getTotalAmountColumn());
+				final ReportItem subTotal = ctx.createTextData("row[\"aggregationForTotalAmountGroup\"]");
+				tableGroup.addReportItemInTableGroupFooter(subTotal, indexTotalColumn, subTotalCellStyle);
+
+				final ReportStyle currencyCellStyle = createReportStyleCenterBold(ctx);
+				if (reportTheme.isDisplayCurrencyInRedInGroupFooter()) {
+					currencyCellStyle.setFontColor(RGB_RED);
+				}
+				final ReportItem currency = ctx.createTextData("row[\"" + gridParam.getTotalCurrencyColumn().getName()
+						+ AGGRE_COLUMN + "\"]");
+				tableGroup.addReportItemInTableGroupFooter(currency,
+						indexForTemplateColumns.get(gridParam.getTotalCurrencyColumn()), currencyCellStyle);
+			}
+			tableGroup.addFooter(nbColumns, null, 15);
+		}
+		if (gridParam.getTotalAmountColumn() != null && gridParam.getTotalCurrencyColumn() != null) {
+			Integer footerIndex;
+			if (reportTheme.isDisplayBlankLineBetweenHeaderAndDetailAndBetweenDetailAndFooter() && !haveGroups) {
+				footerIndex = 1;
+			} else {
+				footerIndex = 0;
+			}
+
+			// set borders on total row
+			customTable.setFooterStyle(footerBordersStyle, footerIndex);
+
+			customTable.addSumAggregation("aggregationForTotalAmount", gridParam.getTotalAmountColumn().getName()
+					+ CROSS_VALUED);
+
+			final Integer indexTotalColumn = indexForTemplateColumns.get(gridParam.getTotalAmountColumn());
+
+			final ReportStyle totalLabelCellStyle = createReportStyleCenterBold(ctx);
+			if (reportTheme.isDisplayTotalLabelInRedInTableFooter()) {
+				totalLabelCellStyle.setFontColor(RGB_RED);
+			}
+			final ReportItem totalLabel = ctx.createLabel("Total");
+			customTable.addReportItemInTableFooter(totalLabel, indexTotalColumn - 1, totalLabelCellStyle, footerIndex);
+
+			final ReportStyle sumCellStyle = createSpecificStyleForTableDetailSumCell(ctx,
+					gridParam.getTotalAmountColumn());
+			if (reportTheme.isDisplayTotalValueInRedInTableFooter()) {
+				sumCellStyle.setFontColor(RGB_RED);
+			}
+			final ReportItem total = ctx.createTextData("row[\"aggregationForTotalAmount\"]");
+			customTable.addReportItemInTableFooter(total, indexTotalColumn, sumCellStyle, footerIndex);
+
+			final ReportStyle currencyCellStyle = createReportStyleCenterBold(ctx);
+			if (reportTheme.isDisplayCurrencyInRedInTableFooter()) {
+				currencyCellStyle.setFontColor(RGB_RED);
+			}
+			final ReportItem currency = ctx.createLabel(subscriptionCurrency.getValue());
+			customTable.addReportItemInTableFooter(currency,
+					indexForTemplateColumns.get(gridParam.getTotalCurrencyColumn()), currencyCellStyle, footerIndex);
+		}
+	}
+
+	private void manageTableColumnWidth(final DesignContext ctx, final String tableName, final int columnIndex,
+			final Integer columnWidth) {
+		final ReportTable table = ctx.findTableByName(tableName);
+		table.setColumnWidth(columnIndex, columnWidth);
+	}
+
+	private void manageGridFirstColumnWidth(final DesignContext ctx, final String gridName,
+			final Integer firstColumnWidth) {
+		final ReportGrid grid = ctx.findGridByName(gridName);
+		grid.setFirstColumnWidth(firstColumnWidth);
+	}
+
+	private ReportTable createTableAndAddItToAGrid(final DesignContext ctx, final String tableName,
+			final int columnCount, final int gridNbRowForTable, final int gridNbColumnForTable,
+			final ReportTheme reportTheme, final boolean haveGroups) {
+		ReportTable table;
+		if (reportTheme.isDisplayBlankLineBetweenHeaderAndDetailAndBetweenDetailAndFooter()) {
+			if (haveGroups) {
+				table = ctx.createTable(tableName, columnCount, 2, 1, 1);
+			} else {
+				table = ctx.createTable(tableName, columnCount, 2, 1, 2);
+				table.setFooterHeight(0, 15);
+			}
+			table.setHeaderHeight(1, 15);
+		} else {
+			table = ctx.createTable(tableName, columnCount, 1, 1, 1);
+		}
+		final ReportGrid grid = ctx.findGridByName("Valuation");
+		grid.addTable(table, gridNbRowForTable, gridNbColumnForTable);
+		return table;
+	}
+
+	private List<ColumnDefinition> buildColumnDefinitionsFromTemplateColumnParametrizations(
+			final List<TemplateColumnParametrization> templateColumnParametrizations, final ProductType productType,
+			final Map<String, ReportDataType> reportDataTypeByColumnName) {
+		final List<ColumnDefinition> columnDefinitions = new ArrayList<ColumnDefinition>();
+		for (final TemplateColumnParametrization templateColumnParametrization : templateColumnParametrizations) {
+			final ReportDataType reportDataType = templateColumnParametrization.getColumn()
+					.retrieveReportableDataTypeForAGivenProductType(productType);
+			if (reportDataType != null) {
+				if (reportDataType.equals(ReportDataType.PERCENT_OR_VALUE)) {
+					final ColumnDefinition columnDefinitionValue = new ColumnDefinition();
+					columnDefinitionValue.setName(templateColumnParametrization.getColumn().getName() + VALUE);
+					columnDefinitionValue.setDataType(ReportDataType.DECIMAL);
+					columnDefinitions.add(columnDefinitionValue);
+					final ColumnDefinition columnDefinitionIsInPercentage = new ColumnDefinition();
+					columnDefinitionIsInPercentage.setName(templateColumnParametrization.getColumn().getName()
+							+ IS_IN_PERCENTAGE);
+					columnDefinitionIsInPercentage.setDataType(ReportDataType.BOOLEAN);
+					columnDefinitions.add(columnDefinitionIsInPercentage);
+				} else if (reportDataType.equals(ReportDataType.DECIMAL_PRICE_DECOMPOSITION)
+						|| reportDataType.equals(ReportDataType.DYNAMIC_PRECISION_DECIMAL)) {
+					final ColumnDefinition columnDefinitionValue = new ColumnDefinition();
+					columnDefinitionValue.setName(templateColumnParametrization.getColumn().getName() + VALUE);
+					columnDefinitionValue.setDataType(ReportDataType.DECIMAL);
+					columnDefinitions.add(columnDefinitionValue);
+					final ColumnDefinition columnDefinitionFormat = new ColumnDefinition();
+					columnDefinitionFormat.setName(templateColumnParametrization.getColumn().getName() + FORMAT);
+					columnDefinitionFormat.setDataType(ReportDataType.STRING);
+					columnDefinitions.add(columnDefinitionFormat);
+					// Keep the normal column definition as well for
+					// subtotals...
+					final ColumnDefinition columnDefinition = new ColumnDefinition();
+					columnDefinition.setName(templateColumnParametrization.getColumn().getName());
+					columnDefinition.setDataType(ReportDataType.DECIMAL);
+					columnDefinitions.add(columnDefinition);
+				} else if (!reportDataType.equals(ReportDataType.LIST_DATE)
+						&& !reportDataType.equals(ReportDataType.LIST_DECIMAL)
+						&& !reportDataType.equals(ReportDataType.LIST_STRING)) {
+					final ColumnDefinition columnDefinition = new ColumnDefinition();
+					columnDefinition.setName(templateColumnParametrization.getColumn().getName());
+					columnDefinition.setDataType(reportDataType);
+					columnDefinitions.add(columnDefinition);
+				}
+				reportDataTypeByColumnName.put(templateColumnParametrization.getColumn().getName(), reportDataType);
+			} else {
+				throw new ReportingException(
+						"There is no TemplateColumnDataMapping / ReportableDataType for the TemplateColumn : "
+								+ templateColumnParametrization.getColumn().getName() + " and for the product type : "
+								+ productType.getValue());
+			}
+
+		}
+		return columnDefinitions;
+	}
+
+	private void bindAllTableColumns(final DesignContext ctx,
+			final Map<String, ReportDataType> reportDataTypeByColumnName,
+			final List<TemplateColumnParametrization> templateColumnParametrizations, final ReportTable table) {
+		int columnIndex = 0;
+		int nbListDataset = 1;
+		for (final TemplateColumnParametrization templateColumnParametrization : templateColumnParametrizations) {
+			if (!templateColumnParametrization.isHideColumn() && this.alwaysHiddenFields == null
+					|| !this.alwaysHiddenFields.contains(templateColumnParametrization.getColumn().getName())) {
+				final List<MessageId> headerMessageIds = templateColumnParametrization.retrieveLabelMessageIds();
+				final String headerExpression = "vars[\"action\"].retrieveLabel(\"" + headerMessageIds.get(0).getKey1()
+						+ "\",\"" + headerMessageIds.get(0).getKey2() + "\",\"" + headerMessageIds.get(1).getKey1()
+						+ "\",\"" + headerMessageIds.get(1).getKey2() + "\")";
+				final ReportItem headerItem = ctx.createTextData(headerExpression);
+
+				final TemplateColumn column = templateColumnParametrization.getColumn();
+				final String columnName = column.getName();
+				final ReportDataType reportDataType = reportDataTypeByColumnName.get(columnName);
+
+				ReportItem dataItem;
+				if (!reportDataType.equals(ReportDataType.LIST_DATE)
+						&& !reportDataType.equals(ReportDataType.LIST_DECIMAL)
+						&& !reportDataType.equals(ReportDataType.LIST_STRING)) {
+					final ReportStyle tableDetailCellStyle = createSpecificStyleForTableDetailCell(ctx, reportDataType,
+							column);
+					if (column.isValueTranslated()) {
+						final String dataExpressionForTranslatedColumn = "var valueToTranslate=row[\"" + columnName
+								+ "\"]; vars[\"action\"].translateValue(valueToTranslate, \"" + columnName + "\")";
+						dataItem = ctx.createTextData(dataExpressionForTranslatedColumn);
+					} else {
+						if (reportDataType.equals(ReportDataType.PERCENT_OR_VALUE)) {
+							dataItem = ctx.createTextData("row[\"" + columnName + VALUE + "\"]");
+							final String scriptOnRender = "if(row[\"" + columnName + IS_IN_PERCENTAGE
+									+ "\"]==true){this.getStyle().numberFormat=\"" + this.percentageFormat
+									+ "\";}else{this.getStyle().numberFormat=\"" + this.defaultNumberFormat + "\";}";
+							dataItem.setOnRender(scriptOnRender);
+						} else if (reportDataType.equals(ReportDataType.DECIMAL_PRICE_DECOMPOSITION)
+								|| reportDataType.equals(ReportDataType.DYNAMIC_PRECISION_DECIMAL)) {
+							dataItem = ctx.createTextData("row[\"" + columnName + VALUE + "\"]");
+							final String scriptOnRender = "var format = row[\"" + columnName + FORMAT
+									+ "\"];this.getStyle().numberFormat = format";
+							dataItem.setOnRender(scriptOnRender);
+						} else if (reportDataType.equals(ReportDataType.DATE)) {
+							final String dateFormat = column.computeDateFormat(getDateFormatForReport());
+							dataItem = ctx.createDateItem(columnName, dateFormat);
+						} else {
+							dataItem = ctx.createTextData("row[\"" + columnName + "\"]");
+						}
+					}
+					if (column.getName().equals("Product Type")) {
+						dataItem.setStringProperty(IStyleModel.WHITE_SPACE_PROP,
+								DesignChoiceConstants.WHITE_SPACE_NOWRAP);
+						tableDetailCellStyle.setTextAlign(DesignChoiceConstants.TEXT_ALIGN_LEFT);
+					}
+					table.bindColumn(columnIndex, headerItem, dataItem, TABLE_HEADER_CELL_STYLE, tableDetailCellStyle);
+				} else {
+					final ReportTable subTable = ctx.createTable(columnName + LIST, 1, 0, 1, 0);
+					final String listDataSetName = "listdataSet" + nbListDataset;
+					ctx.createListDataSetWithEventHandlerClass(CLIPS_DATA_SOURCE, listDataSetName,
+							ListDataSetEventHandler.class.getName(), reportDataType);
+					subTable.bindListDataSet(listDataSetName);
+					if (reportDataType.equals(ReportDataType.LIST_DATE)) {
+						final String dateFormat = column.computeDateFormat(getDateFormatForReport());
+						dataItem = ctx.createDateItem("value", dateFormat);
+					} else {
+						dataItem = ctx.createTextData("row[\"value\"]");
+					}
+					subTable.bindDetailCell(0, 0, dataItem,
+							createSpecificStyleForTableDetailCell(ctx, reportDataType, column));
+					final ReportStyle tableCellContentStyle = ctx.createStyle();
+					table.addSubTable(columnIndex, headerItem, TABLE_HEADER_CELL_STYLE, tableCellContentStyle, subTable);
+					nbListDataset++;
+				}
+				columnIndex++;
+			}
+		}
+	}
+
+	private ReportStyle createSpecificStyleForTableDetailCell(final DesignContext ctx,
+			final ReportDataType reportDataType, final TemplateColumn templateColumn) {
+		final ReportStyle reportStyle = createReportStyle(ctx);
+		manageTextAlignmentForTableDetailCell(templateColumn, reportStyle);
+		manageFormatForTableDetailCell(reportDataType, reportStyle, templateColumn);
+		return reportStyle;
+	}
+
+	private ReportStyle createReportStyle(final DesignContext ctx) {
+		final ReportStyle reportStyle = ctx.createStyle();
+		reportStyle.setFont("Arial");
+		reportStyle.setFontSize(10);
+		return reportStyle;
+	}
+
+	private ReportStyle createSpecificStyleForTableDetailSumCell(final DesignContext ctx,
+			final TemplateColumn templateColumn) {
+		final ReportStyle reportStyle = createSpecificStyleForTableDetailCell(ctx, ReportDataType.DECIMAL,
+				templateColumn);
+		reportStyle.setFontWeight(DesignChoiceConstants.FONT_WEIGHT_BOLD);
+		return reportStyle;
+	}
+
+	private ReportStyle createReportStyleCenterBold(final DesignContext ctx) {
+		final ReportStyle reportStyle = createReportStyle(ctx);
+		reportStyle.setTextAlign(DesignChoiceConstants.TEXT_ALIGN_CENTER);
+		reportStyle.setFontWeight(DesignChoiceConstants.FONT_WEIGHT_BOLD);
+		return reportStyle;
+	}
+
+	private void manageTextAlignmentForTableDetailCell(final TemplateColumn templateColumn,
+			final ReportStyle reportStyle) {
+		final TemplateColumnAlignment alignment = templateColumn.getAlignment();
+		if (alignment == null) {
+			reportStyle.setTextAlign(DesignChoiceConstants.TEXT_ALIGN_CENTER);
+		} else {
+			alignment.applyTo(this.alignmentDefinition, reportStyle);
+		}
+		reportStyle.setVerticalAlign(DesignChoiceConstants.VERTICAL_ALIGN_MIDDLE);
+	}
+
+	private void manageFormatForTableDetailCell(final ReportDataType reportDataType, final ReportStyle reportStyle,
+			final TemplateColumn templateColumn) {
+		if (reportDataType.equals(ReportDataType.DECIMAL)
+				|| reportDataType.equals(ReportDataType.DYNAMIC_PRECISION_DECIMAL)
+				|| reportDataType.equals(ReportDataType.LIST_DECIMAL)) {
+			final String numberFormat = templateColumn.computeNumberFormat(getDefaultNumberFormat());
+			reportStyle.setNumberFormat(numberFormat);
+		} else if (reportDataType.equals(ReportDataType.PERCENTAGE)) {
+			reportStyle.setNumberFormat(this.percentageFormat);
+		} else if (reportDataType.equals(ReportDataType.STRING_CAN_BE_DECIMAL)) {
+			reportStyle.setNumberFormat(NO_SEPARATOR_FORMAT);
+		}
+	}
+
+	private String getDateFormatForReport() {
+		return this.dateFormatForReport;
+	}
+
+	private void setDateFormatForReport(final String dateFormatForReport) {
+		this.dateFormatForReport = dateFormatForReport;
+	}
+
+	private int manageTableColumnWidth(final List<TemplateColumnParametrization> templateColumnParametrizations,
+			final ReportTable customTable) {
+		int columnIndex = 0;
+		int totalColumnWidth = 0;
+		for (final TemplateColumnParametrization templateColumnParametrization : templateColumnParametrizations) {
+			if (!templateColumnParametrization.isHideColumn() && this.alwaysHiddenFields == null
+					|| !this.alwaysHiddenFields.contains(templateColumnParametrization.getColumn().getName())) {
+				final Integer columnWidth = templateColumnParametrization.getColumn().computeColumnWidth(
+						getDefaultColumnWidth());
+				customTable.setColumnWidth(columnIndex, columnWidth);
+				totalColumnWidth += columnWidth;
+				columnIndex++;
+			}
+		}
+		return totalColumnWidth;
+	}
+
+	private void manageMasterPageWidth(final DesignContext ctx, final int totalColumnWidth) {
+		if (totalColumnWidth > A4_MASTER_PAGE_MAX_PIXEL_WIDTH) {
+			final Integer newMasterPageWidth = totalColumnWidth + MASTER_PAGE_MARGIN;
+			ctx.changeMasterPageWidth("tableLandscapePdfCustom", newMasterPageWidth);
+			ctx.changeMasterPageWidth("tableLandscapeExcelCustom", newMasterPageWidth);
+			ctx.changeMasterPageWidth("tableLandscapeExcelCustomWithLogo", newMasterPageWidth);
+		}
+	}
+
+	private void manageTableOrder(final TemplateGridParametrization gridParam, final ReportTable reportTable) {
+		if (gridParam.getOrderingColumn() != null) {
+			reportTable.sortWithAGivenColumn(gridParam.getOrderingColumn().getName(), gridParam.isAscending());
+		}
+	}
+
+	void manageRateCurves(final ReportParametrization reportParametrization, final LocalDate valuationDate,
+			final DesignContext ctx) {
+		if (isIncludeRateCurve(reportParametrization)) {
+			final Map<Currency, List<RateCurveDataRow>> rateCurveDataRowListByCurrency = this.retrieveRateCurveDataHelper
+					.buildRateCurveDataRowListByCurrency(this.entityManager, valuationDate);
+			final ReportGrid rateCurveGrids = ctx.findGridByName("rateCurveGrids");
+			for (final Currency currentCurrency : rateCurveDataRowListByCurrency.keySet()) {
+				final List<RateCurveDataRow> rateCurveDataRowList = rateCurveDataRowListByCurrency.get(currentCurrency);
+				final ReportGrid rateCurveGrid = createRateCurveGrid(ctx);
+				final ReportItem rateCurveTitle = createRateCurveTitle(ctx, currentCurrency);
+				rateCurveGrid.addReportItem(rateCurveTitle, 2, 1);
+				final ReportTable rateCurveTable = createRateCurveTable(ctx, currentCurrency,
+						rateCurveDataRowList.size());
+				manageHeadersOnRateCurveTable(rateCurveTable, ctx);
+				manageDataOnRateCurveTable(rateCurveTable, ctx, rateCurveDataRowList);
+				rateCurveGrid.addTable(rateCurveTable, 3, 1);
+				rateCurveGrids.addGrid(rateCurveGrid, 1, 1);
+			}
+		}
+	}
+
+	private ReportGrid createRateCurveGrid(final DesignContext ctx) {
+		final ReportGrid rateCurveGrid = ctx.createGrid(1, 3);
+		rateCurveGrid.setFirstColumnWidth(600);
+		rateCurveGrid.setFirstLineHeight(50);
+		rateCurveGrid.avoidPageBreakInside();
+		return rateCurveGrid;
+	}
+
+	private ReportItem createRateCurveTitle(final DesignContext ctx, final Currency currency) {
+		final ReportItem rateCurveTitle = ctx.createTextData("vars[\"messages\"].get(\"rateCurveLabel\") + \" "
+				+ currency.getValue() + "\" + \" \" + " + "vars[\"action\"].getFormattedValuationDate()");
+		rateCurveTitle.setStyleName("valuationTitle");
+		return rateCurveTitle;
+	}
+
+	private ReportTable createRateCurveTable(final DesignContext ctx, final Currency currency, final int nbDetailRow) {
+		return ctx.createTable("rateCurveTable" + currency.getValue(), 4, 1, nbDetailRow, 0);
+	}
+
+	private void manageHeadersOnRateCurveTable(final ReportTable rateCurveTable, final DesignContext ctx) {
+		addHeaderOnRateCurveTable(rateCurveTable, ctx, "nbUnit", 0);
+		addHeaderOnRateCurveTable(rateCurveTable, ctx, "unit", 1);
+		addHeaderOnRateCurveTable(rateCurveTable, ctx, "ask", 2);
+		addHeaderOnRateCurveTable(rateCurveTable, ctx, "bid", 3);
+
+	}
+
+	private void addHeaderOnRateCurveTable(final ReportTable rateCurveTable, final DesignContext ctx,
+			final String labelKey, final int headerIndex) {
+		final ReportItem textData = ctx.createTextData("vars[\"messages\"].get(\"" + labelKey + "\")");
+		rateCurveTable.bindHeaderCell(headerIndex, textData, TABLE_HEADER_CELL_STYLE);
+	}
+
+	private void manageDataOnRateCurveTable(final ReportTable rateCurveTable, final DesignContext ctx,
+			final List<RateCurveDataRow> rateCurveDataRowList) {
+		final ReportStyle styleEven = ctx.findStyle("even");
+		final ReportStyle styleOdd = ctx.findStyle("odd");
+		final ReportStyle dataStyle = createReportStyle(ctx);
+		dataStyle.setTextAlign(DesignChoiceConstants.TEXT_ALIGN_CENTER);
+		int detailRowIndex = 0;
+		for (final RateCurveDataRow rateCurveDataRow : rateCurveDataRowList) {
+			ReportStyle styleForCell;
+			if (detailRowIndex % 2 == 0) {
+				styleForCell = styleEven;
+			} else {
+				styleForCell = styleOdd;
+			}
+			fillOneRateCurveLine(rateCurveTable, ctx, detailRowIndex, rateCurveDataRow, dataStyle, styleForCell);
+			detailRowIndex++;
+		}
+	}
+
+	private void fillOneRateCurveLine(final ReportTable rateCurveTable, final DesignContext ctx,
+			final int detailRowIndex, final RateCurveDataRow rateCurveDataRow, final ReportStyle dataStyle,
+			final ReportStyle styleForCell) {
+		manageIntegerDataCell(rateCurveTable, ctx, detailRowIndex, rateCurveDataRow.getNbUnit().toString(), dataStyle,
+				styleForCell, 0);
+		manageStringDataCell(rateCurveTable, ctx, detailRowIndex, rateCurveDataRow.getUnit().getLabel(), dataStyle,
+				styleForCell, 1);
+		manageDecimalDataCell(rateCurveTable, ctx, detailRowIndex, rateCurveDataRow.getAsk().toString(), dataStyle,
+				styleForCell, 2);
+		manageDecimalDataCell(rateCurveTable, ctx, detailRowIndex, rateCurveDataRow.getBid().toString(), dataStyle,
+				styleForCell, 3);
+	}
+
+	private void manageIntegerDataCell(final ReportTable rateCurveTable, final DesignContext ctx,
+			final int detailRowIndex, final String dataValue, final ReportStyle dataStyle,
+			final ReportStyle styleForCell, final int columnIndex) {
+		final ReportItem textData = ctx.createTextData(dataValue);
+		addReportItemInTheTable(rateCurveTable, detailRowIndex, textData, dataStyle, styleForCell, columnIndex);
+	}
+
+	private void manageStringDataCell(final ReportTable rateCurveTable, final DesignContext ctx,
+			final int detailRowIndex, final String dataValue, final ReportStyle dataStyle,
+			final ReportStyle styleForCell, final int columnIndex) {
+		final ReportItem label = ctx.createLabel(dataValue);
+		addReportItemInTheTable(rateCurveTable, detailRowIndex, label, dataStyle, styleForCell, columnIndex);
+	}
+
+	private void manageDecimalDataCell(final ReportTable rateCurveTable, final DesignContext ctx,
+			final int detailRowIndex, final String dataValue, final ReportStyle dataStyle,
+			final ReportStyle styleForCell, final int columnIndex) {
+		final ReportItem textData = ctx.createTextData(dataValue);
+		final String scriptOnRender = "var format = \"###,##0.000000\";this.getStyle().numberFormat = format";
+		textData.setOnRender(scriptOnRender);
+		addReportItemInTheTable(rateCurveTable, detailRowIndex, textData, dataStyle, styleForCell, columnIndex);
+	}
+
+	private void addReportItemInTheTable(final ReportTable rateCurveTable, final int detailRowIndex,
+			final ReportItem reportItem, final ReportStyle dataStyle, final ReportStyle styleForCell,
+			final int columnIndex) {
+		reportItem.setStyle(dataStyle);
+		rateCurveTable.bindDetailCell(detailRowIndex, columnIndex, reportItem, styleForCell);
+	}
+
+	protected Boolean isIncludeRateCurve(final ReportParametrization reportParametrization) {
+		return ((TemplateGridParametrization) reportParametrization.getTemplateParametrization().getGrids().toArray()[0])
+				.isIncludeRateCurve();
+	}
+
+	/**
+	 * Builds all the report files which belong from a particular template.
+	 * 
+	 * @param subscription
+	 *            subscription which execution is in progress
+	 * @param time
+	 *            current time (the time the reports are generated).
+	 * @param work
+	 *            work representing the current execution of a subscription
+	 * @param reportingJob
+	 *            entity that traces the current generation of the set of files
+	 *            associated to a template.
+	 * @param template
+	 *            template used to generate a set of reports
+	 * @param inputStream
+	 *            stream for the BIRT template
+	 * @param workFilter
+	 *            operation filter (used when a retry is requested)
+	 */
+	public boolean generateReportsForATemplate(final Subscription subscription, final LocalDate valuationDate,
+			final ReportingJob reportingJob, final ReportParametrization reportParametrization, final MtmType mtmType,
+			final FrequencyType scheduleType, final File customizeTemplateFile, final ReportingFiltering filtering) {
+		boolean success = true;
+		try {
+			final Collection<GenerationFormat> formats = collectFormats(subscription, reportParametrization);
+
+			final String targetName = subscription.getTargetFileName(valuationDate,
+					reportParametrization.getProductType());
+			final String userFileName = getUserFileName(valuationDate, subscription,
+					reportParametrization.getProductType());
+
+			final String genFileName = this.reportDirectoryName + File.separator + targetName;
+			boolean mustPrepareAction = true;
+			for (final GenerationFormat generationFormat : formats) {
+				final FileFormat format = generationFormat.getFileFormat();
+				if (filtering.acceptFile(reportParametrization, format)) {
+					ReportingTask task = null;
+					InputStream customizeTemplateStream = null;
+					try {
+						customizeTemplateStream = createInputStream(customizeTemplateFile);
+						task = this.reportingService.createTask(customizeTemplateStream);
+						task.setLocal(subscription.getJavaLocale());
+						if (mustPrepareAction) {
+							prepareAction(subscription, reportParametrization, valuationDate, mtmType, scheduleType);
+							mustPrepareAction = false;
+						}
+
+						success &= generateAReport(reportingJob, task, userFileName, genFileName, generationFormat);
+					} catch(IOException ioe){
+						LOG.error(ioe.getMessage());
+						throw ioe;
+					} finally {
+						if (task != null) {
+							((ReportingTaskImpl) task).close();
+						}
+						if (customizeTemplateStream != null) {
+							customizeTemplateStream.close();
+						}
+					}
+				}
+			}
+		} catch (final ReportingException e) {
+			reportingJob.addFailure(Failure.create(ReasonType.CORRUPTED_BIRT_TEMPLATE, null));
+		} catch (final IOException e) {
+			LOG.error("Unable to open " + customizeTemplateFile, e);
+			success = false;
+		}
+		return success;
+	}
+
+	public Collection<GenerationFormat> collectFormats(final Subscription subscription,
+			final ReportParametrization reportParametrization) {
+		final Collection<GenerationFormat> formats = new HashSet<GenerationFormat>();
+		for (final Channel channel : subscription.getChannelSpecification().getChannels()) {
+			for (final FileFormat fileFormat : channel.getFormatSpecification().getFormats()) {
+				final GenerationFormat generationFormat = new GenerationFormat(fileFormat);
+				generationFormat.setApplyXslt(reportParametrization.isXsltApplied());
+				formats.add(generationFormat);
+			}
+		}
+		return formats;
+	}
+
+	public boolean generateAReport(final ReportingJob reportingJob, final ReportingTask task,
+			final String userFileName, final String genFileName, final GenerationFormat generationFormat) {
+		final GenerationAction genAction = GenerationAction.create();
+		final long start = this.timeProvider.getCurrentTime();
+		genAction.setFileFormat(generationFormat.getFileFormat());
+		reportingJob.addGenerationAction(genAction);
+		final boolean success = generateReportFile(task, genFileName, userFileName, generationFormat, genAction);
+		final long end = this.timeProvider.getCurrentTime();
+		genAction.setDuration(end - start);
+		return success;
+	}
+
+	/**
+	 * Generate a letter in pdf.
+	 * 
+	 * @param letterTemplateFile
+	 *            the BIRT template to use.
+	 * @param targetFileName
+	 *            the output file name.
+	 * @throws IOException.
+	 */
+	public void generateLetter(final File letterTemplateFile, final String targetFileName) throws IOException {
+		try {
+			final InputStream letterTemplateStream = new FileInputStream(letterTemplateFile);
+			ReportingTask task = null;
+			try {
+				task = this.reportingService.createTask(letterTemplateStream);
+				final String genFileName = this.reportDirectoryName + File.separator + targetFileName;
+				final String completeFileName = genFileName + FILE_BASENAME_EXTENSION_SEPARATOR
+						+ FileFormat.PDF.getValue();
+				this.reportingService.renderPdf(task, completeFileName);
+			} finally {
+				letterTemplateStream.close();
+				if (task != null) {
+					((ReportingTaskImpl) task).close();
+				}
+			}
+		} catch (final IOException e) {
+			LOG.error("Unable to open " + letterTemplateFile, e);
+			throw e;
+		}
+	}
+
+	/**
+	 * Gets the action (a Java Object) defined in a Template entity. The
+	 * template contains the name of the action class.
+	 * 
+	 * @param template
+	 *            the template that contains the action class name.
+	 */
+	public ReportAction retrieveAction(final Template template) {
+		try {
+			return (ReportAction) Class.forName(template.getActionName()).newInstance();
+		} catch (final InstantiationException e) {
+			throw new ClipsTechnicalException(e);
+		} catch (final IllegalAccessException e) {
+			throw new ClipsTechnicalException(e);
+		} catch (final ClassNotFoundException e) {
+			throw new ClipsTechnicalException(e);
+		}
+	}
+
+	public String getUserFileName(final LocalDate valuationDate, final Subscription subscription,
+			final ProductType productType) {
+		if (subscription.getTemplateSpecification().getReportParametrizationBy(productType) == null) {
+			return null;
+		}
+		final ReportParametrization tsp = subscription.getTemplateSpecification().getReportParametrizationBy(
+				productType);
+		final String customName = tsp.getCustomReportName();
+		if (customName == null) {
+			return null;
+		}
+		final String dateFormat = getDateFormat(customName);
+		if (dateFormat == null) {
+			return customName;
+		}
+		final DateTimeFormatter formatter = DateTimeFormat.forPattern(dateFormat);
+		final String dateString = DateUtil.printLocalDateUsingParisZone(formatter, valuationDate);
+		return customName.replace("{" + tsp.getReportNameDateFormat().getPattern() + "}", dateString);
+	}
+
+	String getDateFormat(final String customName) {
+		final Matcher matcher = Pattern.compile(PATTERN_EXPRESSION).matcher(customName);
+		if (matcher.find()) {
+			final String format = matcher.toMatchResult().group();
+			return format.substring(1, format.length() - 1);
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * Method to preview the template on subscription.
+	 * 
+	 * @param subscription
+	 * @param valuationDate
+	 * @param mtmType
+	 * @param productType
+	 * @param format
+	 * @param fileName
+	 * @return The filename of the generated report.
+	 */
+	public String generatePreviewReport(final Subscription subscription, final LocalDate valuationDate,
+			final MtmType mtmType, final ProductType productType, final FileFormat format, final String fileName,
+			final boolean applyXslt) {
+		final ReportParametrization reportParametrization = subscription.getTemplateSpecification()
+				.getReportParametrizationBy(productType);
+		try {
+			final File customizeTemplateFile = prepareTemplate(subscription, reportParametrization, valuationDate);
+			prepareAction(subscription, reportParametrization, valuationDate, mtmType, FrequencyType.ON_DEMAND);
+			ReportingTask task = null;
+			InputStream customizeTemplateStream = null;
+			try {
+				customizeTemplateStream = new FileInputStream(customizeTemplateFile);
+				task = this.reportingService.createTask(customizeTemplateStream);
+				task.setLocal(subscription.getJavaLocale());
+				if (FileFormat.PDF.equals(format)) {
+					this.reportingService.renderPdf(task, fileName);
+				} else if (FileFormat.XLS.equals(format)) {
+					this.reportingService.renderExcel(task, fileName);
+				} else if (FileFormat.CSV.equals(format)) {
+					this.reportingService.renderCsv(fileName);
+				} else if (FileFormat.TXT.equals(format)) {
+					this.reportingService.renderTxt(fileName);
+				} else if (FileFormat.XML.equals(format)) {
+					this.reportingService.renderTemplateXml(fileName, applyXslt);
+				}
+			} catch (final IOException e) {
+				LOG.error("Unable to open " + customizeTemplateFile, e);
+			} finally {
+				if (task != null) {
+					((ReportingTaskImpl) task).close();
+				}
+				if (customizeTemplateStream != null) {
+					try {
+						customizeTemplateStream.close();
+					} catch (final IOException e) {
+						LOG.error("Unable to close " + customizeTemplateFile, e);
+					}
+				}
+			}
+		} finally {
+			PerimeterManager.reset();
+		}
+
+		final String targetFileName = subscription.getTargetFileName(valuationDate,
+				reportParametrization.getProductType())
+				+ FILE_BASENAME_EXTENSION_SEPARATOR + format.getValue();
+		return targetFileName;
+	}
+
+	protected InputStream createInputStream(final File file) throws FileNotFoundException {
+		return new FileInputStream(file);
+	}
+
+	public TimeProvider getTimeProvider() {
+		return this.timeProvider;
+	}
+
+	public String getReportDirectoryName() {
+		return this.reportDirectoryName;
+	}
+
+	public ReportingService getReportingService() {
+		return this.reportingService;
+	}
+
+	public void setTimeProvider(final TimeProvider timeProvider) {
+		this.timeProvider = timeProvider;
+	}
+
+	public void setReportingService(final ReportingService reportingService) {
+		this.reportingService = reportingService;
+	}
+
+	public void setReportDirectoryName(final String reportDirectoryName) {
+		this.reportDirectoryName = reportDirectoryName;
+	}
+
+	public EntityManager getEntityManager() {
+		return this.entityManager;
+	}
+
+	@VisibleForTesting
+	public void setEntityManager(final EntityManager entityManager) {
+		this.entityManager = entityManager;
+	}
+
+}

@@ -1,0 +1,197 @@
+package sgcib.clips.reporting;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import javax.inject.Inject;
+
+import org.joda.time.LocalDate;
+import org.springframework.stereotype.Service;
+
+import sgcib.clips.chain.OutstandingNominalDao;
+import sgcib.clips.chain.PriceDecompositionDao;
+import sgcib.clips.config.BcsToggle;
+import sgcib.clips.domain.FormatingOptions;
+import sgcib.clips.domain.Perimeter;
+import sgcib.clips.domain.Position;
+import sgcib.clips.domain.PositionFormatingOptions;
+import sgcib.clips.domain.Product;
+import sgcib.clips.domain.ProductFormatingOptions;
+import sgcib.clips.domain.ReportableData;
+import sgcib.clips.domain.Subscription;
+import sgcib.clips.domain.TemplateColumn;
+import sgcib.clips.domain.TemplateColumnDataMapping;
+import sgcib.clips.reporting.custom.TemplateColumnDataMappingAccessor;
+import sgcib.clips.shared.domain.ProductId;
+import sgcib.clips.shared.domain.ProductType;
+import sgcib.clips.shared.domain.Repository;
+
+/**
+ * DAO to load ReportDataMatrix objects
+ */
+@Service
+public class ReportDataMatrixDAO {
+
+	@Inject
+	ReportDataProvider provider;
+
+	@Inject
+	OutstandingNominalDao outstandingNominalDao;
+
+	@Inject
+	PriceDecompositionDao priceDecompositionDao;
+
+	/**
+	 * Return the report data matrix defined by the perimeter of the
+	 * subscription, the valuation data and the MTM type.
+	 * 
+	 * @param subscription
+	 * 
+	 * @param productTypes
+	 *            The product types into which to find the positions
+	 * @param columns
+	 *            the columns.
+	 * @param publishedLabelByProductId
+	 *            a map which contains the publish label for a given product
+	 * @param nbDecimalByProductId
+	 *            Number of decimals for Price decomposition
+	 * @param locale
+	 *            The locale of the report for number formats in price
+	 *            decomposition
+	 * @param valuationDate
+	 *            the valuation date of the data
+	 * @return the report data matrix.
+	 */
+	public ReportDataMatrix find(final Subscription subscription, final ProductType reportProductType,
+			final Set<TemplateColumn> columns, final Map<ProductId, String> publishedLabelByProductId,
+			final Map<ProductId, Integer> nbDecimalByProductId, final Locale locale, final LocalDate valuationDate,
+			final boolean forSGWebsite, final TemplateColumnDataMappingAccessor dataMappingAccessor) {
+
+		final ReportDataMatrix reportDataMatrix = new ReportDataMatrix();
+
+		if (!forSGWebsite) {
+			loadPositions(subscription, reportProductType, columns, reportDataMatrix);
+		}
+
+		loadProducts(subscription, columns, publishedLabelByProductId, nbDecimalByProductId, locale, valuationDate,
+				reportDataMatrix, forSGWebsite, dataMappingAccessor);
+
+		return reportDataMatrix;
+	}
+
+	private void loadProducts(final Subscription subscription, final Set<TemplateColumn> columns,
+			final Map<ProductId, String> publishedLabelByProductId, final Map<ProductId, Integer> nbDecimalByProductId,
+			final Locale locale, final LocalDate valuationDate, final ReportDataMatrix reportDataMatrix,
+			final boolean forSGWebsite, final TemplateColumnDataMappingAccessor dataMappingAccessor) {
+		List<Product> products = PerimeterManager.getProducts();
+		if (forSGWebsite) {
+			products = filterProductsForSGWebSite(products);
+		}
+		if (!BcsToggle.USE_BCS) {
+			this.outstandingNominalDao.fillProductsWithOutstandingNominalsIfNecessary(columns, products, valuationDate);
+		}
+		this.priceDecompositionDao.calculateProductPriceDecompositionIfNecessary(columns, products,
+				nbDecimalByProductId, locale);
+		this.priceDecompositionDao.calculateOptionLeg1IfNecessary(products);
+
+		for (final Product product : products) {
+			loadCustomColumns(product, subscription);
+			final ReportDataMatrixRow reportDataMatrixRow = new ReportDataMatrixRow();
+			for (final TemplateColumn templateColumn : columns) {
+				final TemplateColumnDataMapping columnDataMapping = dataMappingAccessor.getDataMapping(templateColumn);
+				final ReportableData reportableData = columnDataMapping.getReportableData();
+				product.setPublishLabel(publishedLabelByProductId.get(product.getId()));
+				final Object value = this.provider.retrieveReportDataValue(product, reportableData);
+				reportDataMatrixRow.addValue(templateColumn.getName(), value);
+			}
+			reportDataMatrixRow.setItemId(product.getId());
+			reportDataMatrix.addRow(reportDataMatrixRow);
+		}
+	}
+
+	private void loadPositions(final Subscription subscription, final ProductType reportProductType,
+			final Set<TemplateColumn> columns, final ReportDataMatrix reportDataMatrix) {
+		final List<Position> positions = PerimeterManager.getPositionsByProductTypes(Arrays.asList(reportProductType));
+		for (final Position position : positions) {
+			loadCustomColumns(position, subscription);
+			final ReportDataMatrixRow reportDataMatrixRow = new ReportDataMatrixRow();
+			for (final TemplateColumn templateColumn : columns) {
+				final TemplateColumnDataMapping columnDataMapping = templateColumn
+						.retrieveATemplateColumnDataMappingForAGivenProductType(reportProductType);
+				final ReportableData reportableData = columnDataMapping.getReportableData();
+				final Object value = this.provider.retrieveReportDataValue(position, reportableData);
+				reportDataMatrixRow.addValue(templateColumn.getName(), value);
+			}
+			reportDataMatrixRow.setItemId(position.getId());
+			reportDataMatrix.addRow(reportDataMatrixRow);
+		}
+	}
+
+	private void loadCustomColumns(final Product product, final Subscription subscription) {
+		final Perimeter Perimeter = subscription.getPerimeterSpecification().getPerimeter();
+		final List<ProductFormatingOptions> formatingOptions = Perimeter.getProductFormatingOptions();
+		if (formatingOptions != null) {
+			for (final ProductFormatingOptions formatingOption : formatingOptions) {
+				if (product.getId().equals(formatingOption.getSelectedProductId())) {
+					setCustomColumns(product, formatingOption);
+				}
+			}
+		}
+	}
+
+	private void loadCustomColumns(final Position position, final Subscription subscription) {
+		final Product product = position.getProduct();
+		final Perimeter Perimeter = subscription.getPerimeterSpecification().getPerimeter();
+		final List<PositionFormatingOptions> formatingOptions = Perimeter.getPositionFormatingOptions();
+		if (formatingOptions != null) {
+			for (final PositionFormatingOptions formatingOption : formatingOptions) {
+				if (position.getId().equals(formatingOption.getSelectedPositionId())) {
+					setCustomColumns(product, formatingOption);
+				}
+			}
+		}
+	}
+
+	private void setCustomColumns(final Product product, final FormatingOptions formatingOption) {
+		product.setCustomColumn1(formatingOption.getCustomColumn1());
+		product.setCustomColumn2(formatingOption.getCustomColumn2());
+		product.setCustomColumn3(formatingOption.getCustomColumn3());
+		product.setCustomColumn4(formatingOption.getCustomColumn4());
+		product.setCustomColumn5(formatingOption.getCustomColumn5());
+	}
+
+	/**
+	 * Website needs only SOL products
+	 * 
+	 * @param products
+	 * @return
+	 */
+	private List<Product> filterProductsForSGWebSite(final List<Product> products) {
+		final List<Product> filteredProducts = new ArrayList<Product>();
+
+		for (final Product product : products) {
+			if (product.getRepository().equals(Repository.MARS_VALUATION)
+					|| product.getRepository().equals(Repository.VALUATION)) {
+				filteredProducts.add(product);
+			}
+		}
+
+		return filteredProducts;
+	}
+
+	public void setProvider(final ReportDataProvider provider) {
+		this.provider = provider;
+	}
+
+	public void setOutstandingNominalDao(final OutstandingNominalDao outstandingNominalDao) {
+		this.outstandingNominalDao = outstandingNominalDao;
+	}
+
+	public void setPriceDecompositionDao(final PriceDecompositionDao priceDecompositionDao) {
+		this.priceDecompositionDao = priceDecompositionDao;
+	}
+}

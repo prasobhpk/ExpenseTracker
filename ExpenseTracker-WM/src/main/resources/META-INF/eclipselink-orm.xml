@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings version="2.3"
+	xmlns="http://www.eclipse.org/eclipselink/xsds/persistence/orm"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.eclipse.org/eclipselink/xsds/persistence/orm http://www.eclipse.org/eclipselink/xsds/eclipselink_orm_2_3.xsd">
+
+	<!-- <table-generator name="_GEN" table="ID_GEN" pk-column-name="ID_NAME" 
+		value-column-name="ID_VAL" pk-column-value="_SEQ" allocation-size="100" /> -->
+
+	<table-generator name="TXN_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="TXN_SEQ"
+		allocation-size="100" />
+
+	<table-generator name="FAV_STOCK_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="FAV_STOCK_SEQ"
+		allocation-size="100" />
+
+	<table-generator name="FOLIO_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="FOLIO_SEQ"
+		allocation-size="100" />
+
+	<table-generator name="INSTRUMENT_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="INSTRUMENT_SEQ"
+		allocation-size="100" />
+
+	<table-generator name="HOLDING_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="HOLDING_SEQ"
+		allocation-size="100" />
+
+	<table-generator name="BROKERAGE_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="BROKERAGE_SEQ"
+		allocation-size="100" />
+
+	<table-generator name="WEALTH_CONTEXT_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="WEALTH_CONTEXT_SEQ"
+		allocation-size="100" />
+
+	<table-generator name="MTM_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="MTM_SEQ"
+		allocation-size="100" />
+
+</entity-mappings>

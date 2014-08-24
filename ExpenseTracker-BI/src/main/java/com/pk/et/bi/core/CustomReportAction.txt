@@ -1,0 +1,793 @@
+package sgcib.clips.reporting.custom;
+
+import static com.google.common.collect.Maps.newHashMap;
+import static com.google.common.collect.Sets.newHashSet;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import javax.persistence.EntityManager;
+
+import org.eclipse.birt.report.engine.api.script.IReportContext;
+import org.eclipse.birt.report.engine.api.script.ScriptException;
+import org.eclipse.birt.report.engine.api.script.instance.IDataSourceInstance;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import sgcib.clips.config.RAConfigurationProvider;
+import sgcib.clips.domain.DataNotAvailableException;
+import sgcib.clips.domain.MessageText;
+import sgcib.clips.domain.Perimeter;
+import sgcib.clips.domain.Position;
+import sgcib.clips.domain.Product;
+import sgcib.clips.domain.ReportParametrization;
+import sgcib.clips.domain.Subscription;
+import sgcib.clips.domain.TemplateColumn;
+import sgcib.clips.domain.TemplateColumnParametrization;
+import sgcib.clips.domain.TemplateGridParametrization;
+import sgcib.clips.reporting.DfaReportAction;
+import sgcib.clips.reporting.PerimeterDataExtractorService;
+import sgcib.clips.reporting.PerimeterManager;
+import sgcib.clips.reporting.ReportDataMatrix;
+import sgcib.clips.reporting.ReportDataMatrixDAO;
+import sgcib.clips.reporting.ReportDataMatrixRow;
+import sgcib.clips.reporting.ReportDataType;
+import sgcib.clips.reporting.ReportingServicesProvider;
+import sgcib.clips.service.forex.ForexCurrencyConversionManager;
+import sgcib.clips.shared.domain.Currency;
+import sgcib.clips.shared.domain.FrequencyType;
+import sgcib.clips.shared.domain.MessageId;
+import sgcib.clips.shared.domain.MtmType;
+import sgcib.clips.shared.domain.PerimeterItemId;
+import sgcib.clips.shared.domain.PositionId;
+import sgcib.clips.shared.domain.ProductCodeType;
+import sgcib.clips.shared.domain.ProductId;
+import sgcib.clips.shared.domain.ProductType;
+import sgcib.clips.shared.domain.ReportTheme;
+import sgcib.clips.shared.domain.ReportType;
+import sgcib.clips.shared.domain.Separator;
+import sgcib.clips.shared.util.StringUtil;
+import sgcib.clips.time.TimeProvider;
+
+import com.google.common.annotations.VisibleForTesting;
+
+/**
+ * Report action for the custom template.
+ */
+public class CustomReportAction extends DfaReportAction {
+
+	private static final int REAL_CODE_ISIN_LENGHT = 12;
+
+	static final String FIXED_SUBJECT_FOR_CUSTOM_REPORT = "fixedSubjectForCustomReport";
+
+	/**
+	 * A logger.
+	 */
+	private static final Logger LOG = LoggerFactory.getLogger(CustomReportAction.class);
+
+	public static final String FOREX_CURVE_DATA_ROWS = "FOREX_CURVE_DATA_ROWS";
+	public static final String FOREX_RATE_DATA_ROWS = "FOREX_RATE_DATA_ROWS";
+
+	private ForexCurrencyConversionManager forexConverter;
+
+	private ReportDataMatrixDAO reportDataMatrixDAO = ReportingServicesProvider.getInstance().getReportDataMatrixDAO();
+
+	private final PerimeterDataExtractorService perimeterDataExtractorService = ReportingServicesProvider.getInstance()
+			.getPerimeterDataExtractorService();
+
+	/**
+	 * A data rows list for forex table.
+	 */
+	List<ForexCurveDataRow> forexCurveDataRows;
+
+	/**
+	 * The default number format for custom reports.
+	 */
+	private final String defaultNumberFormat = RAConfigurationProvider.getInstance().getConfiguration()
+			.getReportingAgentCustomReportDefaultNumberFormat();
+
+	/**
+	 * The currency pairs used to get Forex table in report.
+	 */
+	private final String currencyPairs = RAConfigurationProvider.getInstance().getConfiguration().getCurrencyPairs();
+
+	/**
+	 * @return the default number format for custom reports.
+	 */
+	public String getDefaultNumberFormat() {
+		return this.defaultNumberFormat;
+	}
+
+	/**
+	 * @return the default date format for custom reports.
+	 */
+	public String getDefaultDateFormat() {
+		return this.subscription.getTemplateSpecification().getDateFormat();
+	}
+
+	@Override
+	public void prepare(final EntityManager entityManager, final Subscription subscription,
+			final ReportParametrization templateSpecificationParametrization, final LocalDate valuationDate,
+			final MtmType mtmType, final FrequencyType schedulingType, final TimeProvider timeProvider,
+			final DFAColumnParametrizationAdder dfaColumnParametrizationAdder) {
+		super.prepare(entityManager, subscription, templateSpecificationParametrization, valuationDate, mtmType,
+				schedulingType, timeProvider, dfaColumnParametrizationAdder);
+		this.forexCurveDataRows = new ArrayList<ForexCurveDataRow>();
+		if (this.forexConverter == null) {
+			this.forexConverter = new ForexCurrencyConversionManager(mtmType);
+		}
+	}
+
+	@Override
+	public void afterOpenDatasource(final IDataSourceInstance dataSource, final IReportContext reportContext)
+			throws ScriptException {
+		final String reportDisplayedLabel = getReportTheme().getDisplayedLabel();
+		reportContext.setGlobalVariable("titlePageTab", this.messages.get("titlePageTab", reportDisplayedLabel));
+		reportContext.setGlobalVariable("importantInformationTab", this.messages.get("importantInformationTab"));
+		reportContext.setGlobalVariable("positionTab", this.messages.get("positionTab", reportDisplayedLabel));
+		reportContext.setGlobalVariable("forexTableTab", this.messages.get("forexTableTab"));
+		reportContext.setGlobalVariable("rateCurveTab", this.messages.get("rateCurveTab"));
+
+		final TemplateGridParametrization templateGridParametrization = this.reportParametrization
+				.getTemplateParametrization().getGrids().iterator().next();
+
+		final List<TemplateColumn> templateColumns = retrieveAllTemplateColumns();
+
+		final Map<PositionId, Integer> nbDecimalByPositionId = retrieveNbDecimalByPositionId();
+		final Map<ProductId, Integer> nbDecimalByProductId = retrieveNbDecimalByProductId();
+
+		final ReportDataMatrix reportDataMatrix = retrieveDataFromTemplateColumns(templateColumns, nbDecimalByProductId);
+		if (null != templateGridParametrization.getOrderingColumn()) {
+			/*
+			 * Order the records in reportDataMatrix using the ordering column
+			 * name and is ascending order variable
+			 */
+			final String secondOrderColumn = templateGridParametrization.getSecondOrderingColumn() == null ? null
+					: templateGridParametrization.getSecondOrderingColumn().getName();
+			final String thirdOrderColumn = templateGridParametrization.getThirdOrderingColumn() == null ? null
+					: templateGridParametrization.getThirdOrderingColumn().getName();
+			reportDataMatrix.sortRecords(templateGridParametrization.getOrderingColumn().getName(), secondOrderColumn,
+					thirdOrderColumn, templateGridParametrization.isAscending());
+		}
+		final Map<String, ReportDataType> reportDataTypeByColumnName = retrieveReportDataTypeByColumnName(templateColumns);
+
+		reportContext.setGlobalVariable("datas", reportDataMatrix.getRows());
+		reportContext.setGlobalVariable("columns", templateColumns);
+		reportContext.setGlobalVariable("reportDataTypeByColumnName", reportDataTypeByColumnName);
+		reportContext.setGlobalVariable("defaultNumberFormat", getDefaultNumberFormat());
+		reportContext.setGlobalVariable("defaultDateFormat", getDefaultDateFormat());
+		reportContext.setGlobalVariable("nbDecimalByPositionId", nbDecimalByPositionId);
+		reportContext.setGlobalVariable("nbDecimalByProductId", nbDecimalByProductId);
+		reportContext.setGlobalVariable("totalAmountColumn", templateGridParametrization.getTotalAmountColumn());
+		reportContext.setGlobalVariable("totalCurrencyColumn", templateGridParametrization.getTotalCurrencyColumn());
+		reportContext.setGlobalVariable("subscriptionCurrency", this.subscription.getTemplateSpecification()
+				.getCurrency());
+		reportContext.setGlobalVariable("valuationDate", this.valuationDate);
+		reportContext.setGlobalVariable("mtmType", this.mtmType);
+		reportContext.setGlobalVariable(FOREX_CURVE_DATA_ROWS, this.forexCurveDataRows);
+
+		/**
+		 * A data rows list for forex table which contains forex of currencies
+		 * w.r.t subscription currency.
+		 */
+		final List<ForexCurveDataRow> forexRateDataRows = retrieveForexRates(reportDataMatrix.getRows(),
+				templateGridParametrization.getTotalCurrencyColumn());
+		if (forexRateDataRows.isEmpty()) {
+			reportContext.setGlobalVariable("showForexUsed", false);
+		} else {
+			reportContext.setGlobalVariable("showForexUsed", true);
+		}
+		reportContext.setGlobalVariable(FOREX_RATE_DATA_ROWS, forexRateDataRows);
+	}
+
+	/**
+	 * This method build a list of rows that compose the dataset, the report
+	 * will use them to build it's grid.
+	 */
+	@Override
+	public void openDataSource(final IDataSourceInstance dataSource) throws ScriptException {
+		clear();
+		if (isIncludeForexTable()) {
+			this.forexCurveDataRows = retrieveForexCurves();
+		}
+	}
+
+	/**
+	 * @return all the forex for forex curve table.
+	 */
+	public List<ForexCurveDataRow> retrieveForexCurves() {
+		final List<ForexCurveDataRow> forexCurveDataRows = new ArrayList<ForexCurveDataRow>();
+		if (this.forexConverter == null) {
+			this.forexConverter = new ForexCurrencyConversionManager(this.mtmType);
+		}
+		final List<Map<String, String>> currencyPairsStr = getCurrencyPairMap(getCurrencyPairs());
+		for (final Map<String, String> map : currencyPairsStr) {
+			for (final Map.Entry<String, String> entry : map.entrySet()) {
+				if (!StringUtil.isEmpty(entry.getKey()) && !StringUtil.isEmpty(entry.getValue())) {
+					try {
+						final BigDecimal forexRate = this.forexConverter.getForexCrossValue(
+								Currency.getCurrencyFromStringName(entry.getKey()),
+								Currency.getCurrencyFromStringName(entry.getValue()), this.valuationDate);
+						if (forexRate != null) {
+							forexCurveDataRows.add(buildForexCurveDataRow(forexRate,
+									Currency.getCurrencyFromStringName(entry.getKey()),
+									Currency.getCurrencyFromStringName(entry.getValue())));
+						}
+					} catch (final DataNotAvailableException ex) {
+						LOG.info("No Forex Rate found for {} / {}", Currency.getCurrencyFromStringName(entry.getKey()),
+								Currency.getCurrencyFromStringName(entry.getValue()));
+					}
+				}
+			}
+		}
+		LOG.info("Running {} with {} rows", getClass(), this.forexCurveDataRows.size());
+		return forexCurveDataRows;
+	}
+
+	String getCurrencyPairs() {
+		return this.currencyPairs;
+	}
+
+	public List<Map<String, String>> getCurrencyPairMap(final String string) {
+		final String[] strings = string.split(";");
+
+		final List<Map<String, String>> pairs = new ArrayList<Map<String, String>>();
+		for (final String s : strings) {
+			final String value = s.trim();
+			if (!value.isEmpty()) {
+				final String[] pair = value.split(",");
+				final Map<String, String> map = newHashMap();
+				map.put(pair[0], pair[1]);
+				pairs.add(map);
+			}
+		}
+		return pairs;
+	}
+
+	/**
+	 * @param position
+	 * @return
+	 */
+	protected ForexCurveDataRow buildForexCurveDataRow(final BigDecimal forexRate, final Currency unitCurrency,
+			final Currency quotationCurrency) {
+		final ForexCurveDataRow forexCurveDataRow = new ForexCurveDataRow();
+		final String currencies = unitCurrency + "/" + quotationCurrency;
+		forexCurveDataRow.setCurrencies(currencies);
+		forexCurveDataRow.setForexRate(forexRate);
+		return forexCurveDataRow;
+	}
+
+	void clear() {
+		this.forexCurveDataRows.clear();
+	}
+
+	public Map<ProductId, Integer> retrieveNbDecimalByProductId() {
+		final Perimeter perimeter = this.subscription.getPerimeterSpecification().getPerimeter();
+		return this.perimeterDataExtractorService.retrieveNbDecimalByProductId(perimeter);
+	}
+
+	private Map<PositionId, Integer> retrieveNbDecimalByPositionId() {
+		final Perimeter perimeter = this.subscription.getPerimeterSpecification().getPerimeter();
+		return this.perimeterDataExtractorService.retrieveNbDecimalByPositionId(perimeter);
+	}
+
+	public Map<PerimeterItemId, Integer> retrieveNbDecimalByPerimeterItemId() {
+		final Perimeter perimeter = this.subscription.getPerimeterSpecification().getPerimeter();
+		return this.perimeterDataExtractorService.retrieveNbDecimalByPerimeterItemId(perimeter);
+	}
+
+	/**
+	 * Retrieve a map which link {@link ReportDataType} with the column name.
+	 * 
+	 * @param templateColumns
+	 *            the template columns to consider.
+	 * @return the map built.
+	 */
+	public Map<String, ReportDataType> retrieveReportDataTypeByColumnName(final List<TemplateColumn> templateColumns) {
+		final Map<String, ReportDataType> reportDataTypeByColumnName = new HashMap<String, ReportDataType>();
+		for (final TemplateColumn templateColumn : templateColumns) {
+			final ReportDataType reportDataType = templateColumn
+					.retrieveReportableDataTypeForAGivenProductType(this.reportParametrization.getProductType());
+			reportDataTypeByColumnName.put(templateColumn.getName(), reportDataType);
+		}
+		return reportDataTypeByColumnName;
+	}
+
+	/**
+	 * Retrieve all the template columns of the ReportParametrization.
+	 * 
+	 * @return all the template columns.
+	 */
+	public List<TemplateColumn> retrieveAllTemplateColumns() {
+		final List<TemplateColumn> templateColumns = new ArrayList<TemplateColumn>();
+		for (final TemplateGridParametrization templateGridParametrization : this.reportParametrization
+				.getTemplateParametrization().getGrids()) {
+			for (final TemplateColumnParametrization templateColumnParametrization : templateGridParametrization
+					.getColumns(new DFAColumnParametrizationAdder(this.reportParametrization.getProductType()))) {
+				templateColumns.add(templateColumnParametrization.getColumn());
+			}
+		}
+		return templateColumns;
+	}
+
+	/**
+	 * Retrieve all the template columns of the ReportParametrization.
+	 * 
+	 * @return all the template columns.
+	 */
+	public List<String> retrieveHeaders() {
+		final List<String> headers = new ArrayList<String>();
+		for (final TemplateGridParametrization templateGridParametrization : this.reportParametrization
+				.getTemplateParametrization().getGrids()) {
+			for (final TemplateColumnParametrization templateColumnParametrization : templateGridParametrization
+					.getColumns(new DFAColumnParametrizationAdder(this.reportParametrization.getProductType()))) {
+				final List<MessageId> messageIds = templateColumnParametrization.retrieveLabelMessageIds();
+				final String columnHeader = retrieveLabel(messageIds.get(0).getKey1(), messageIds.get(0).getKey2(),
+						messageIds.get(1).getKey1(), messageIds.get(1).getKey2());
+				headers.add(columnHeader);
+			}
+		}
+		return headers;
+	}
+
+	/**
+	 * Return the report creation date (a localized date).
+	 * 
+	 * @return the creation date ( a localized date)
+	 */
+	@Override
+	public String getCreationDate() {
+		final DateTime currentDateTime = getTimeProvider().getCurrentDateTime();
+		final DateTimeZone dateTimeZone = this.subscription.getScheduleSpecification().getDateTimeZone();
+		final String dateFormat = this.subscription.getTemplateSpecification().getDateFormat();
+		final DateTimeFormatter dateFormatter = DateTimeFormat
+				.forPattern(StringUtil.isEmpty(dateFormat) ? this.messages.get("dateFormat") : dateFormat)
+				.withZone(dateTimeZone).withLocale(this.subscription.getJavaLocale());
+		return dateFormatter.print(currentDateTime);
+
+	}
+
+	/**
+	 * Retrieve data from template columns.
+	 * 
+	 * @param templateColumns
+	 *            the template columns to consider.
+	 * @param nbDecimalByProductId
+	 *            Number of decimals for Price decomposition
+	 * @return a {@link ReportDataMatrix}.
+	 */
+	@SuppressWarnings("unchecked")
+	public ReportDataMatrix retrieveDataFromTemplateColumns(final List<TemplateColumn> templateColumns,
+			final Map<ProductId, Integer> nbDecimalByProductId) {
+		final Map<ProductId, String> publishedLabelByProductId = retrievePublishedLabelByProductId();
+		final ProductType productType = this.reportParametrization.getProductType();
+
+		final ReportDataMatrix reportDataMatrix = this.reportDataMatrixDAO.find(getSubscription(), productType,
+				new HashSet<TemplateColumn>(templateColumns), publishedLabelByProductId, nbDecimalByProductId,
+				getLocale(), this.valuationDate, false, new CustomTempateDataMappingAccesor(productType));
+
+		return reportDataMatrix;
+	}
+
+	@Override
+	public String getCarefullyInformationKey() {
+		return "carefullyInformationCustomReport" + this.reportParametrization.getReportTheme().getDisplayedLabel();
+	}
+
+	/**
+	 * @return the report title.
+	 */
+	@Override
+	public String getReportTitle() {
+		String reportTitle;
+		if (getReportTheme().isDisplaySubjectOnReportFirstPageDependingOnProductType()) {
+			final String reportTitleKey = this.reportParametrization.getProductType().getCustomReportTitleKey();
+			if (reportTitleKey == null) {
+				LOG.error("For custom template, the product type {} has no corresponding report title.",
+						this.reportParametrization.getProductType().getValue());
+			}
+			reportTitle = this.messages.get(reportTitleKey);
+		} else {
+			reportTitle = this.messages.get(FIXED_SUBJECT_FOR_CUSTOM_REPORT);
+		}
+		return reportTitle;
+
+	}
+
+	public Boolean isIncludeForexTable() {
+		return ((TemplateGridParametrization) this.reportParametrization.getTemplateParametrization().getGrids()
+				.toArray()[0]).isIncludeForexTable();
+	}
+
+	public Boolean isIncludeRateCurve() {
+		return ((TemplateGridParametrization) this.reportParametrization.getTemplateParametrization().getGrids()
+				.toArray()[0]).isIncludeRateCurve();
+	}
+
+	/**
+	 * Return the subscription consolidation level name.
+	 * 
+	 * @return the subscription consolidation level name.
+	 */
+	public String getClientName() {
+		return this.subscription.getClientSpecification().getOverriddenClientName();
+	}
+
+	/**
+	 * Format the valuation date to a String by using the pattern 'dd-MMM-yyyy'.
+	 * 
+	 * @return the valuation date formatted in a String.
+	 */
+	public String getFormattedValuationDate() {
+		if (this.subscription.getTemplateSpecification().getDateFormat() != null
+				&& !this.subscription.getTemplateSpecification().getDateFormat().isEmpty()) {
+			return this.valuationDate.toString(DateTimeFormat.forPattern(
+					this.subscription.getTemplateSpecification().getDateFormat()).withLocale(
+					this.subscription.getJavaLocale()));
+		}
+		return this.valuationDate.toString(DateTimeFormat.forPattern(this.messages.get("dateFormat")).withLocale(
+				this.subscription.getJavaLocale()));
+	}
+
+	/**
+	 * Retrieve a custom label if exists, default one otherwise. Not used in the
+	 * code, but used in the javascript.
+	 * 
+	 * @param customKey1
+	 *            the custom label key 1
+	 * @param customKey2
+	 *            the custom label key 2
+	 * @param defaultKey1
+	 *            the default label key 1
+	 * @param defaultKey2
+	 *            the default label key 2
+	 * @return the label.
+	 */
+	public String retrieveLabel(final String customKey1, final String customKey2, final String defaultKey1,
+			final String defaultKey2) {
+		final MessageText messageText = this.messages.retrieveValue(customKey1, customKey2);
+		final String stringMessageText;
+		if (messageText == null) {
+			stringMessageText = this.messages.get(defaultKey1, defaultKey2);
+		} else {
+			stringMessageText = messageText.getValue();
+		}
+		return stringMessageText;
+	}
+
+	/**
+	 * Translate a value.
+	 * 
+	 * @param value
+	 *            the value to translate.
+	 * @param context
+	 *            the context to use.
+	 * @return the value translated.
+	 */
+	public String translateValue(final String value, final String context) {
+		if (value == null || value.trim().length() == 0) {
+			return null;
+		} else {
+			return this.messages.get(value, context);
+		}
+	}
+
+	/**
+	 * @return the subscription separator.
+	 */
+	public Separator getSeparator() {
+		return this.subscription.getTemplateSpecification().getSeparator();
+	}
+
+	/**
+	 * @return the name of the group by column. Null if no column set.
+	 */
+	public String getColumnToGroupBy() {
+		final TemplateColumn column = this.reportParametrization.getTemplateParametrization().getGrids().iterator()
+				.next().getGroupingColumn();
+		String columnName = null;
+		if (column != null) {
+			columnName = column.getName();
+		}
+		return columnName;
+	}
+
+	/**
+	 * @return the name of the sort by column. Null if no column set.
+	 */
+	public String getColumnToSortBy() {
+		final TemplateColumn column = this.reportParametrization.getTemplateParametrization().getGrids().iterator()
+				.next().getOrderingColumn();
+		String columnName = null;
+		if (column != null) {
+			columnName = column.getName();
+		}
+		return columnName;
+	}
+
+	/**
+	 * @return the column to use for sum. Null if no column set.
+	 */
+	public TemplateColumn getColumnToSum() {
+		final TemplateColumn column = this.reportParametrization.getTemplateParametrization().getGrids().iterator()
+				.next().getTotalAmountColumn();
+		return column;
+	}
+
+	/**
+	 * @return the value currency column. Null if no column set.
+	 */
+	public TemplateColumn getValueCurrencyColumn() {
+		final TemplateColumn column = this.reportParametrization.getTemplateParametrization().getGrids().iterator()
+				.next().getTotalCurrencyColumn();
+		return column;
+	}
+
+	/**
+	 * @return true if we have to display sub totals in the report.
+	 */
+	public boolean displaySubTotal() {
+		return this.reportParametrization.getTemplateParametrization().getGrids().iterator().next()
+				.isSubtotalDisplayed();
+	}
+
+	/**
+	 * @return a map which contains, for each product in the perimeter, the
+	 *         published label if exists.
+	 */
+	public Map<ProductId, String> retrievePublishedLabelByProductId() {
+		return this.subscription.retrievePublishedLabelByProductId();
+	}
+
+	/**
+	 * Retrieve forex rates used for cross valorisation for total computation.
+	 * 
+	 * @param rows
+	 *            the rows cross valued.
+	 * @param totalCurrencyColumn
+	 *            the total currency column.
+	 * @return the forex rates used for cross valorisation for total computation
+	 */
+	public List<ForexCurveDataRow> retrieveForexRates(final List<ReportDataMatrixRow> rows,
+			final TemplateColumn totalCurrencyColumn) {
+		final List<ForexCurveDataRow> forexCurveDataRows = new ArrayList<ForexCurveDataRow>();
+		if (totalCurrencyColumn != null) {
+			if (this.forexConverter == null) {
+				this.forexConverter = new ForexCurrencyConversionManager(this.mtmType);
+			}
+			final Currency subscrCurrency = this.getSubscription().getTemplateSpecification().getCurrency();
+			final Set<Currency> currencySet = newHashSet(subscrCurrency);
+
+			for (final ReportDataMatrixRow reportDataMatrixRow : rows) {
+				final Object currencyName = reportDataMatrixRow.getValue(totalCurrencyColumn.getName());
+				if (currencyName != null) {
+					final Currency valueCurrency = Currency.valueOf((String) currencyName);
+					if (!currencySet.contains(valueCurrency)) {
+						try {
+							final BigDecimal forex = this.forexConverter.getForexCrossValue(subscrCurrency,
+									valueCurrency, this.valuationDate);
+							forexCurveDataRows.add(buildForexCurveDataRow(forex, subscrCurrency, valueCurrency));
+						} catch (final DataNotAvailableException e) {
+							LOG.error("No Forex rate found for {} / {}", subscrCurrency, valueCurrency);
+						}
+						currencySet.add(valueCurrency);
+					}
+				}
+			}
+		}
+		return forexCurveDataRows;
+	}
+
+	/**
+	 * @return true id the order type is ascending.
+	 */
+	public boolean isAscending() {
+		return this.reportParametrization.getTemplateParametrization().getGrids().iterator().next().isAscending();
+	}
+
+	/**
+	 * @return the subscription locale.
+	 */
+	public Locale getLocale() {
+		return this.subscription.getJavaLocale();
+	}
+
+	public boolean displayHeader() {
+		return this.subscription.getTemplateSpecification().isDisplayHeader();
+	}
+
+	public void setReportDataMatrixDAO(final ReportDataMatrixDAO reportDataMatrixDAO) {
+		this.reportDataMatrixDAO = reportDataMatrixDAO;
+	}
+
+	/**
+	 * @return the report theme.
+	 */
+	public ReportTheme getReportTheme() {
+		return this.reportParametrization.getReportTheme();
+	}
+
+	@Override
+	public String getSGLogo() {
+		return manageLogoWithLocale(getReportTheme().getLogoPath());
+	}
+
+	/**
+	 * @return the SG address depending on the report theme.
+	 */
+	@Override
+	public String getSGAddress() {
+		if (getReportTheme().isHideSgAddressOnReportFirstPage()) {
+			return "";
+		} else {
+			return this.messages.get("SGAddressAndCapital" + getReportTheme().getDisplayedLabel());
+		}
+	}
+
+	/**
+	 * Return the first page footer.
+	 */
+	@Override
+	public String getFooter() {
+		if (getReportTheme().isDisplayOnlySgAddressOnReportFirstPage() && this.mtmType.equals(MtmType.ECONOMIC)) {
+			return getSGAddress();
+		} else {
+			return super.getFooter();
+		}
+	}
+
+	/**
+	 * @return a boolean to know whether we have to display logo on valuation
+	 *         excel sheet or not.
+	 */
+	public boolean displayLogoOnValuationExcelSheet() {
+		return getReportTheme().isDisplayLogoOnValuationExcelSheet();
+	}
+
+	/**
+	 * @return a boolean to know whether we have to hide the client part on the
+	 *         valuation part or not.
+	 */
+	public boolean hideClientPartOnValuationPart() {
+		return getReportTheme().isHideClientPartOnValuationPart();
+	}
+
+	/**
+	 * @return a boolean to know whether we have to hide the valuation date part
+	 *         on the valuation part or not.
+	 */
+	public boolean hideValuationDatePartOnValuationPart() {
+		return getReportTheme().isHideValuationDatePartOnValuationPart();
+	}
+
+	/**
+	 * @return a boolean to know whether we have to hide the blank line after
+	 *         the forex table on the valuation part or not.
+	 */
+	public boolean hideBlankLineAfterForexTableOnValuationPart() {
+		return getReportTheme().isHideBlankLineAfterForexTableOnValuationPart();
+	}
+
+	/**
+	 * @return a boolean to know whether we have to hide the do not hesitate to
+	 *         contact message on the valuation part or not.
+	 */
+	public boolean hideDoNotHesitateToContactMessageOnValuationPart() {
+		return getReportTheme().isHideDoNotHesitateToContactMessageOnValuationPart();
+	}
+
+	/**
+	 * @return a boolean to know whether we have to hide the do not hesitate to
+	 *         contact message in black on the valuation part or not.
+	 */
+	public boolean hideDoNotHesitateToContactMessageInBlackOnValuationPart() {
+		return getReportTheme().isHideDoNotHesitateToContactMessageInBlackOnValuationPart();
+	}
+
+	/**
+	 * @return a boolean to know whether we have to hide the SG valuation link
+	 *         on the valuation part or not.
+	 */
+	public boolean hideSgValuationLinkOnValuationPart() {
+		return getReportTheme().isHideSgValuationLinkOnValuationPart();
+	}
+
+	/**
+	 * @return a boolean to know whether we have to hide the valuation from your
+	 *         perspective disclaimer on the valuation part or not.
+	 */
+	public boolean hideValuationFromYourPerspectiveOnValuationPart() {
+		final boolean hideValuationFromYourPerspectiveOnValuationPart = getReportTheme()
+				.isHideValuationFromYourPerspectiveOnValuationPart();
+		final boolean hideValuationFromYourPerspectiveOnValuationPartIfReportContainsOnlyProductsWithRealIsinCode = getReportTheme()
+				.isHideValuationFromYourPerspectiveOnValuationPartIfReportContainsOnlyProductsWithRealIsinCode();
+		if (!hideValuationFromYourPerspectiveOnValuationPart
+				&& hideValuationFromYourPerspectiveOnValuationPartIfReportContainsOnlyProductsWithRealIsinCode) {
+			return reportContainsOnlyProductsWithRealIsinCode();
+		} else {
+			return hideValuationFromYourPerspectiveOnValuationPart;
+		}
+	}
+
+	/**
+	 * Return a boolean to know whether the report contains only products with
+	 * real ISIN code or not. We consider all positions and products of the
+	 * report.
+	 * 
+	 * @return a boolean
+	 */
+	@VisibleForTesting
+	protected boolean reportContainsOnlyProductsWithRealIsinCode() {
+		final ProductType reportProductType = this.reportParametrization.getProductType();
+		final List<Position> positions = PerimeterManager.getPositionsByProductTypes(Arrays.asList(reportProductType));
+		final List<Product> products = PerimeterManager.getProductsByProductTypes(Arrays.asList(reportProductType));
+		for (final Position position : positions) {
+			products.add(position.getProduct());
+		}
+		for (final Product product : products) {
+			if (!isProductWithRealIsinCode(product)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Return a boolean to know whether the product have a real ISIN code or
+	 * not. We consider that a ISIN code which have a length equals to 12
+	 * characters is a real ISIN code.
+	 * 
+	 * @param product
+	 *            the product to consider.
+	 * @return a boolean.
+	 */
+	@VisibleForTesting
+	protected boolean isProductWithRealIsinCode(final Product product) {
+		final String codeISIN = product.getCodeValueByCodeType(ProductCodeType.ISIN);
+		if (codeISIN.length() == REAL_CODE_ISIN_LENGHT) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * @return a boolean to know whether we have to hide the midMtmDfaDenition
+	 *         or not. We hide this information if the perimeter has no DFA
+	 *         position.
+	 */
+	public boolean hideMidMtmDfaDefinition() {
+		return !PerimeterManager
+				.positionPerimeterIsDfaEligible(newHashSet(this.reportParametrization.getProductType()));
+	}
+
+	/**
+	 * @return a boolean to know whether we have to hide the midDfaDenition or
+	 *         not. We hide this information if the perimeter has no DFA
+	 *         product.
+	 */
+	public boolean hideMidDfaDefinition() {
+		return !PerimeterManager.productPerimeterIsDfaEligible();
+	}
+
+	public String getValuationPerspectiveForIR() {
+		String perspectiveText = "";
+		if (ReportType.INTERNAL.equals(getSubscription().getReportType())) {
+			perspectiveText = "_IR";
+		}
+		return perspectiveText;
+	}
+
+}

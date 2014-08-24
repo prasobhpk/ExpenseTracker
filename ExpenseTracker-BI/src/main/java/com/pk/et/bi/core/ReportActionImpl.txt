@@ -1,0 +1,302 @@
+package sgcib.clips.reporting;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.EntityManager;
+
+import org.joda.time.LocalDate;
+
+import sgcib.clips.domain.BookingEntity;
+import sgcib.clips.domain.Position;
+import sgcib.clips.domain.Product;
+import sgcib.clips.domain.ReportParametrization;
+import sgcib.clips.domain.Subscription;
+import sgcib.clips.reporting.custom.DFAColumnParametrizationAdder;
+import sgcib.clips.shared.domain.Currency;
+import sgcib.clips.shared.domain.FrequencyType;
+import sgcib.clips.shared.domain.MtmType;
+import sgcib.clips.shared.domain.ProductType;
+import sgcib.clips.shared.domain.ReportType;
+import sgcib.clips.time.TimeProvider;
+import sgcib.clips.util.DateUtil;
+
+/**
+ * Report action implementation. Used for valuation and internal reporting.
+ */
+public abstract class ReportActionImpl extends BasicReportActionImpl {
+
+	/**
+	 * Valuation date.
+	 */
+	protected LocalDate valuationDate;
+
+	/**
+	 * Flags which indicates if the report to generate is an accounting one.
+	 */
+	protected MtmType mtmType;
+
+	/**
+	 * The label that indicates the scheduling of the report.
+	 */
+	protected FrequencyType schedulingType;
+
+	/**
+	 * Column for DFA.
+	 */
+	protected DFAColumnParametrizationAdder dfaColumnParametrizationAdder;
+
+	/**
+	 * Prepare the action.
+	 * 
+	 * @param subscription
+	 * @param reportParametrization
+	 * @param valuationDate
+	 * @param mtmType
+	 * @param schedulingType
+	 * @param timeProvider
+	 * @param dfaColumnParametrizationAdder
+	 */
+	public void prepare(final EntityManager entityManager, final Subscription subscription,
+			final ReportParametrization reportParametrization, final LocalDate valuationDate, final MtmType mtmType,
+			final FrequencyType schedulingType, final TimeProvider timeProvider,
+			final DFAColumnParametrizationAdder dfaColumnParametrizationAdder) {
+		super.prepare(entityManager, subscription, reportParametrization, timeProvider);
+		this.valuationDate = valuationDate;
+		this.mtmType = mtmType;
+		this.schedulingType = schedulingType;
+		this.dfaColumnParametrizationAdder = dfaColumnParametrizationAdder;
+
+		ActionManager.setCurrentAction(this);
+	}
+
+	/**
+	 * Verify if a given position must be included in the report.
+	 * 
+	 * @param position
+	 *            position to check.
+	 * @return true if the position must be included.
+	 */
+	public boolean accept(final Position position) {
+		return this.reportParametrization.computeConcreteProductTypes().contains(position.getProductType())
+				&& position.getMarkToMarketForReport() != null;
+	}
+
+	/**
+	 * Gets the disclaimer title.
+	 * 
+	 * @return the disclaimer title.
+	 */
+	public String getDisclaimerTitle() {
+		return getDisclaimer().getTitle();
+	}
+
+	/**
+	 * Gets the valuation date.
+	 * 
+	 * @return the valuation date.
+	 */
+	public Date getValuationDate() {
+		return DateUtil.convertLocalDateToDateAtUTCMidday(this.valuationDate);
+	}
+
+	/**
+	 * @return the positions number.
+	 */
+	public int getPositionSize() {
+		return this.getPositions().size();
+	}
+
+	/**
+	 * Gets the scheduling type.
+	 * 
+	 * @return the scheduling type to display in report.
+	 */
+	public FrequencyType getSchedulingType() {
+		return this.schedulingType;
+	}
+
+	/**
+	 * @return the scheduling label.
+	 */
+	public String getSchedulingLabel() {
+		return this.schedulingType.getMessageName();
+	}
+
+	/**
+	 * @return the company text.
+	 */
+	public String getCompanyText() {
+		return "Tour Société Générale\n92972 Paris\nLa Défense Cedex\nFrance\n"
+				+ "Société Anonyme au capital\nde 933 027 039€\nRCS Paris B 552 120 222";
+	}
+
+	/**
+	 * @return the template product type.
+	 */
+	public ProductType getTemplateProductType() {
+		return this.reportParametrization.getTemplateParametrization().getTemplate().getProductType();
+	}
+
+	/**
+	 * @return the currency.
+	 */
+	public Currency getCurrency() {
+		return getSubscription().getTemplateSpecification().getCurrency();
+	}
+
+	/**
+	 * Return all positions loaded by the perimeter manager for a report.
+	 * 
+	 * @return all the positions.
+	 */
+	public List<Position> getPositions() {
+		return PerimeterManager.getPositions();
+	}
+
+	/**
+	 * Return all products loaded by the perimeter manager for a report.
+	 * 
+	 * @return all the products.
+	 */
+	public List<Product> getProducts() {
+		return PerimeterManager.getProducts();
+	}
+
+	/**
+	 * @return the mtm type.
+	 */
+	public MtmType getMtmType() {
+		return this.mtmType;
+	}
+
+	/**
+	 * @return the SG address for all the reports.
+	 */
+	public String getSGAddress() {
+		if (this.subscription.getPerimeterSpecification().getBookingEntity() != null) {
+			return this.subscription.getPerimeterSpecification().getBookingEntity().getAddress();
+		}
+		final BookingEntity defaultBookingEntity = new BookingEntity().getDefaultBookingEntity();
+		if (defaultBookingEntity != null) {
+			return defaultBookingEntity.getAddress();
+		} else {
+			return "";
+		}
+
+	}
+
+	/**
+	 * Return the first page footer.
+	 */
+	public String getFooter() {
+		final String notConcernedByDocument = this.messages.get("notConcernedByDocument");
+		final String test = notConcernedByDocument.replaceAll("destroy it ", "destroy it<br />")
+				.replaceAll("détruire ", "détruire<br />").replaceAll("prévenir ", "prévenir<br />");
+		return "<html><table><tr><td>" + getSGAddress() + "</td><td></td></tr><tr><td></td><td>" + test
+				+ "</td></tr></table></html>";
+	}
+
+	/**
+	 * Return the carefully information key.
+	 * 
+	 * @return the carefully information key.
+	 */
+	public abstract String getCarefullyInformationKey();
+
+	/**
+	 * Get the report title key.
+	 * 
+	 * @return the report title key.
+	 */
+	public abstract String getReportTitle();
+
+	/**
+	 * Set the valuation date.
+	 * 
+	 * @param valuationDate
+	 *            the valuation date to set.
+	 */
+	public void setValuationDate(final LocalDate valuationDate) {
+		this.valuationDate = valuationDate;
+	}
+
+	/**
+	 * Set the mtm type.
+	 * 
+	 * @param mtmType
+	 *            the mtm type to set.
+	 */
+	public void setMtmType(final MtmType mtmType) {
+		this.mtmType = mtmType;
+	}
+
+	/**
+	 * @return the valuation date (LocalDate).
+	 */
+	public LocalDate retrieveValuationDate() {
+		return this.valuationDate;
+	}
+
+	/**
+	 * @return a boolean to know if the report is internal or not.
+	 */
+	public boolean isInternalReport() {
+		if (this.subscription != null && this.subscription.getReportType() != null
+				&& ReportType.INTERNAL.name().equalsIgnoreCase(this.subscription.getReportType().name())) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @return the valuation perspective context message.
+	 */
+	public String getValuationPerspective() {
+		if (this.subscription != null && this.subscription.getReportType() != null
+				&& ReportType.INTERNAL.name().equalsIgnoreCase(this.subscription.getReportType().name())) {
+			return "internalReport";
+		}
+		return "default";
+	}
+
+	/**
+	 * @return a boolean.
+	 */
+	public boolean isGlobalMtmByClient() {
+		if (this.subscription != null && this.subscription.getTemplateSpecification() != null) {
+			return this.subscription.getTemplateSpecification().isGlobalMtmByClient();
+		}
+		return false;
+	}
+
+	/**
+	 * Method to know if the given product type is visible or not for internal
+	 * reporting.
+	 * 
+	 * @param productType
+	 *            the product type to consider.
+	 * @return a boolean to know if the given product type is visible or not for
+	 *         internal reporting.
+	 */
+	public boolean isProductTypeVisibleInIR(final String productType) {
+		if (this.subscription != null
+				&& this.subscription.getPerimeterSpecification().getPerimeter().getProductTypes() != null) {
+			final List<ProductType> selectedProductTypes = this.subscription.getPerimeterSpecification().getPerimeter()
+					.getProductTypes();
+			return selectedProductTypes.contains(ProductType.valueOf(productType));
+		}
+		return false;
+
+	}
+
+	@Override
+	public String getCreationDate() {
+		return super.getCreationDateFormatted(this.messages.get("dateFormat"));
+	}
+
+	public String getFormattedDate(final LocalDate date) {
+		return DateUtil.localDateToStringWithPatternAndLocale(date, this.messages.get("dateFormat"),
+				this.subscription.getJavaLocale());
+	}
+}

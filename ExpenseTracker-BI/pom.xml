@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.pk.et</groupId>
+		<artifactId>ExpenseTracker</artifactId>
+		<version>1.0</version>
+	</parent>
+	<artifactId>ExpenseTracker-BI</artifactId>
+	<packaging>jar</packaging>
+	<dependencies>
+		<dependency>
+			<groupId>org.eclipse.birt.runtime</groupId>
+			<artifactId>org.eclipse.birt.runtime</artifactId>
+			<version>${birt.sdk.version}</version>
+<!-- 			<type>pom</type> -->
+		</dependency>
+		<dependency>
+			<groupId>com.pk.et</groupId>
+			<artifactId>ExpenseTracker-INFRA</artifactId>
+			<version>1.0</version>
+		</dependency>
+	</dependencies>
+	<build>
+		<finalName>ExpenseTracker-BI</finalName>
+		<plugins>
+		<!-- 
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unpack assembly</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.eclipse.birt.runtime</groupId>
+									<artifactId>org.eclipse.birt.runtime</artifactId>
+									<version>${birt.runtime.version}</version>
+									<type>zip</type>
+									<overWrite>false</overWrite>
+									<outputDirectory>
+										target/birt-runtime
+									</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			 -->
+		</plugins>
+	</build>
+	<properties>
+		<birt.runtime.version>4.3.1</birt.runtime.version>
+		<birt.sdk.version>4.3.1</birt.sdk.version>
+	</properties>
+</project>

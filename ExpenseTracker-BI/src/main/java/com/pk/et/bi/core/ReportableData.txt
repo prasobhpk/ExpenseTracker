@@ -1,0 +1,94 @@
+package sgcib.clips.domain;
+
+import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Table;
+
+import sgcib.clips.reporting.ReportDataType;
+import sgcib.clips.shared.domain.ReportableDataEntity;
+import sgcib.clips.shared.domain.ReportableDataId;
+
+/**
+ * This class defines a reportable data.
+ */
+@Entity
+@Table(name = "REPORTABLE_DATA")
+public class ReportableData extends ActiveRecordBaseImportedEntity<ReportableDataId> {
+
+	/**
+	 * The id.
+	 */
+	@EmbeddedId
+	private ReportableDataId id;
+
+	/**
+	 * The report data type.
+	 */
+	@Enumerated(EnumType.STRING)
+	private ReportDataType type;
+
+	@Column(insertable = false, updatable = false)
+	@Enumerated(EnumType.STRING)
+	private ReportableDataEntity entity;
+
+	@Column(insertable = false, updatable = false)
+	private String field;
+
+	/**
+	 * Default constructor.
+	 */
+	public ReportableData() {
+	}
+
+	/**
+	 * Create a {@link ReportableData}
+	 * 
+	 * @param entity
+	 *            the entity name to use.
+	 * @param field
+	 *            the field name to use.
+	 * @return the {@link ReportableData} built.
+	 */
+	public static ReportableData create(final ReportableDataEntity entity, final String field) {
+		final ReportableData reportableData = new ReportableData();
+		reportableData.id = new ReportableDataId(entity, field);
+		reportableData.entity = entity;
+		reportableData.field = field;
+		return reportableData;
+	}
+
+	/**
+	 * Retrieve the id ({@link ReportableDataId}).
+	 */
+	@Override
+	public ReportableDataId getId() {
+		return this.id;
+	}
+
+	public ReportDataType getType() {
+		return this.type;
+	}
+
+	public void setType(final ReportDataType type) {
+		this.type = type;
+	}
+
+	/**
+	 * Define the toString method.
+	 */
+	@Override
+	public String toString() {
+		return "ReportableData [id=" + this.id + "]";
+	}
+
+	public ReportableDataEntity getEntity() {
+		return this.entity;
+	}
+
+	public String getField() {
+		return this.field;
+	}
+}

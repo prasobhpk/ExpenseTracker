@@ -1,0 +1,80 @@
+#web_portfolio_screen_panel, #ui_portfolio_screen_panel{
+    width: 100%; /* important to be same as image width */
+    height: 383px; /* important to be same as image height */
+    position: relative; /* important */
+	overflow:hidden;
+}
+#mobile_portfolio_screen_panel {
+    width: 100%; /* important to be same as image width */
+    height: 433px; /* important to be same as image height */
+    position: relative; /* important */
+	overflow:hidden;
+}
+
+#web_portfolio_screen_panel ul, #ui_portfolio_screen_panel ul, #mobile_portfolio_screen_panel ul{ margin:0px; padding:0px;}
+#web_portfolio_screen_panel ul li, #ui_portfolio_screen_panel ul li, #mobile_portfolio_screen_panel ul li{ padding:0% !important; margin:0% !important; background:none !important;}
+#web_portfolio_screen_panel ul li:hover, #ui_portfolio_screen_panel ul li:hover, #mobile_portfolio_screen_panel ul li:hover{ padding:0% !important; margin:0% !important; background:none !important;}
+#web_portfolio_screen_panel ul li img, #ui_portfolio_screen_panel ul li img{ margin:35px 0px 0px 38px;}
+#mobile_portfolio_screen_panel ul li img{ margin:110px 0px 0px 192px;}
+#web_portfolio_screen_panel ul li a, #ui_portfolio_screen_panel ul li a, #mobile_portfolio_screen_panel ul li a{color:#ffffff;;text-align:center; font-size:13px; }
+#web_portfolio_screen_panel ul li a, #ui_portfolio_screen_panel ul li a{color:#ffffff; padding:7px 15px; background-color: #000;
+    filter: alpha(opacity=80);
+    -moz-opacity: 0.8;
+	-khtml-opacity: 0.8;
+    opacity: 0.8; border-radius:100px; -webkit-border-radius:100px; -moz-border-radius:100%; width:150px; height:150px;}
+
+#web_portfolio_screen_panelContent, #ui_portfolio_screen_panelContent, #mobile_portfolio_screen_panelContent {
+   /* width: 720px;*/
+    position: absolute;
+	top: 0;
+	margin-left: 0;
+}
+.web_portfolio_screen_panelImage, .ui_portfolio_screen_panelImage, .mobile_portfolio_screen_panelImage {
+    float: left;
+    position: relative;
+	display: none; margin-top:-150px;
+}
+.web_portfolio_screen_panelImage span,.ui_portfolio_screen_panelImage span{ position:absolute; top:50%; left:40%;
+	    /* background-color: #000;
+    filter: alpha(opacity=70);
+    -moz-opacity: 0.7;
+	-khtml-opacity: 0.7;
+    opacity: 0.7; margin:40% 15% 30% 15%; padding:2% 1%;
+   position: absolute;
+   width: 90%; height:30px; margin:auto;
+    background-color: #000;
+    filter: alpha(opacity=70);
+    -moz-opacity: 0.7;
+	-khtml-opacity: 0.7;
+    opacity: 0.7;
+    color: #fff; font-size:12px;
+    display: none; z-index:100; color:#ffffff !important; */
+}
+
+
+.clear {
+	clear: both;
+}
+.web_portfolio_screen_panelImage span strong, .ui_portfolio_screen_panelImage span strong{
+    font-size: 14px;
+}
+.top {
+	top: 0;
+	left: 0;
+}
+.bottom {
+	bottom: 0;
+    left: 0;
+}
+.left {
+	top: 0;
+    left: 0;
+	width: 110px !important;
+	height: 280px;
+}
+.right {
+	right: 0;
+	bottom: 0;
+	width: 90px !important;
+	height: 290px;
+}

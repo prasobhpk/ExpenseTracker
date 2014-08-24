@@ -1,0 +1,24 @@
+/**
+ * 
+ */
+package sgcib.clips.reporting;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * ReportableDataProperty
+ * 
+ */
+public abstract class ReportableDataProperty {
+	public abstract Object getValue(final Object object);
+
+	public Object getValue(final List<?> objects) {
+		final List<Object> values = new ArrayList<Object>();
+		for (final Object object : objects) {
+			final Object value = getValue(object);
+			values.add(value);
+		}
+		return values;
+	}
+}

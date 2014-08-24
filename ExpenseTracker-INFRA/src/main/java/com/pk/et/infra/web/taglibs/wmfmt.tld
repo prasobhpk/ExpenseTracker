@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE taglib  PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN" "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd">
+<taglib>
+	<tlib-version>1.0</tlib-version>
+	<jsp-version>1.2</jsp-version>
+	<short-name>exp</short-name>
+	<uri>http://trackyourexpense.com/wm</uri>
+	<description>
+		All Tag libraries in use within the WM Product
+	</description>
+	<tag>
+		<name>fmtNumber</name>
+		<tag-class>com.pk.et.infra.web.taglibs.WMFormatNumber</tag-class>
+		<body-content>JSP</body-content>
+		<description>
+			Formats a numeric value as a number according the attributes specified
+		</description>
+		
+		<attribute>
+			<name>value</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+					Numeric value to be formatted.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>groupingUsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies whether the formatted output will contain any grouping separators.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>fractionDigits</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Number of digits in the	fractional portion of the formatted output.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>trimUsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies whether to remove the trailing zeroes
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>onlyRound</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies only default rounding is required.No formatting according to locale
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+			<description>
+				Name of the exported scoped variable which stores the formatted result as a	String.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>scope</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+			<description>
+				Scope of var.
+			</description>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>fmtPrice</name>
+		<tag-class>com.pk.et.infra.web.taglibs.WMFormatPrice</tag-class>
+		<body-content>JSP</body-content>
+		<description>
+			Formats a numeric value as a number according the attributes specified
+		</description>
+		
+		<attribute>
+			<name>value</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+					Numeric value to be formatted.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>groupingUsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies whether the formatted output will contain any grouping separators.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>fractionDigits</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Number of digits in the	fractional portion of the formatted output.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>trimUsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies whether to remove the trailing zeroes
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>onlyRound</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies only default rounding is required.No formatting according to locale
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+			<description>
+				Name of the exported scoped variable which stores the formatted result as a	String.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>scope</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+			<description>
+				Scope of var.
+			</description>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>fmtAmount</name>
+		<tag-class>com.pk.et.infra.web.taglibs.WMFormatAmount</tag-class>
+		<body-content>JSP</body-content>
+		<description>
+			Formats a numeric value as a number according the attributes specified
+		</description>
+		
+		<attribute>
+			<name>value</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+					Numeric value to be formatted.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>groupingUsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies whether the formatted output will contain any grouping separators.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>fractionDigits</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Number of digits in the	fractional portion of the formatted output.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>trimUsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies whether to remove the trailing zeroes
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>onlyRound</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies only default rounding is required.No formatting according to locale
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+			<description>
+				Name of the exported scoped variable which stores the formatted result as a	String.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>scope</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+			<description>
+				Scope of var.
+			</description>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>fmtUnit</name>
+		<tag-class>com.pk.et.infra.web.taglibs.WMFormatUnit</tag-class>
+		<body-content>JSP</body-content>
+		<description>
+			Formats a numeric value as a number according the attributes specified
+		</description>
+		
+		<attribute>
+			<name>value</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+					Numeric value to be formatted.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>groupingUsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies whether the formatted output will contain any grouping separators.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>fractionDigits</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Number of digits in the	fractional portion of the formatted output.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>trimUsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies whether to remove the trailing zeroes
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>onlyRound</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies only default rounding is required.No formatting according to locale
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+			<description>
+				Name of the exported scoped variable which stores the formatted result as a	String.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>scope</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+			<description>
+				Scope of var.
+			</description>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>fmtRate</name>
+		<tag-class>com.pk.et.infra.web.taglibs.WMFormatRate</tag-class>
+		<body-content>JSP</body-content>
+		<description>
+			Formats a numeric value as a number according the attributes specified
+		</description>
+		
+		<attribute>
+			<name>value</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+					Numeric value to be formatted.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>groupingUsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies whether the formatted output will contain any grouping separators.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>fractionDigits</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Number of digits in the	fractional portion of the formatted output.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>trimUsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies whether to remove the trailing zeroes
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>onlyRound</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Specifies only default rounding is required.No formatting according to locale
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+			<description>
+				Name of the exported scoped variable which stores the formatted result as a	String.
+			</description>
+		</attribute>
+		
+		<attribute>
+			<name>scope</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+			<description>
+				Scope of var.
+			</description>
+		</attribute>
+	</tag>
+</taglib>

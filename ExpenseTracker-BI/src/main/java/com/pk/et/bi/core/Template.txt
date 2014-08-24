@@ -1,0 +1,468 @@
+package sgcib.clips.domain;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import sgcib.clips.shared.domain.FileFormat;
+import sgcib.clips.shared.domain.Locale;
+import sgcib.clips.shared.domain.ProductType;
+import sgcib.clips.shared.domain.ReportCategory;
+import sgcib.clips.shared.domain.ReportType;
+import sgcib.clips.shared.domain.TemplateId;
+import sgcib.clips.util.hibernate.HibernateTypeName;
+
+@Table(name = Template.TABLE_NAME)
+@NamedQueries({
+		@NamedQuery(name = Template.LOAD_TEMPLATE_RULES, query = "SELECT distinct t FROM Template t LEFT OUTER JOIN FETCH t.rules where t.id=:id"),
+		@NamedQuery(name = Template.LOAD_CUSTOM_TEMPLATE_BY_REPORTTYPE, query = "SELECT distinct t FROM Template t where t.isCustom =1 and t.reportType=:reportType"),
+		@NamedQuery(name = Template.GET_ALL, query = "select distinct template from Template template LEFT OUTER JOIN FETCH template.fileFormats"),
+		@NamedQuery(name = Template.LOAD_TEMPLATE_GRIDS, query = //
+		"select DISTINCT tp FROM Template tp " + //
+				"LEFT OUTER JOIN FETCH tp.grids gridParams " + //
+				"LEFT OUTER JOIN FETCH gridParams.columns gpCol "//
+				+ "WHERE tp.id =(:id)"),// /
+		@NamedQuery(name = Template.LOAD_TEMPLATE_COLUMNS, query = //
+		"SELECT grid FROM Template t " + //
+				"JOIN t.grids grid " + //
+				"LEFT OUTER JOIN FETCH grid.columns col " + //
+				"WHERE t.id =(:id)") })
+@Entity
+public class Template extends ActiveRecordBaseImportedEntity<TemplateId> {
+
+	public static final String TABLE_NAME = "TEMPLATE";
+
+	static final String LOAD_TEMPLATE_RULES = "LOAD_TEMPLATE_RULES";
+	static final String LOAD_CUSTOM_TEMPLATE_BY_REPORTTYPE = "LOAD_CUSTOM_TEMPLATE_BY_REPORTTYPE";
+	static final String LOAD_TEMPLATE_GRIDS = "LOAD_TEMPLATE_GRIDS";
+	static final String LOAD_TEMPLATE_COLUMNS = "LOAD_TEMPLATE_COLUMNS";
+	static final String GET_ALL = "GET_ALL";
+
+	private static final Logger LOG = LoggerFactory.getLogger(Template.class);
+
+	@Id
+	@Type(type = HibernateTypeName.TEMPLATE_ID)
+	@Column(name = "NAME")
+	private TemplateId id;
+
+	@Column(name = "NAME", unique = true, updatable = false, insertable = false)
+	private String name;
+
+	@Column(name = "ACTION_NAME")
+	private String actionName;
+
+	@Column(name = "FILE_NAME")
+	private String fileName;
+
+	@Column(name = "REPORT_TYPE")
+	@Enumerated(EnumType.STRING)
+	private ReportType reportType;
+
+	@Column(name = "REPORT_CATEGORY")
+	@Enumerated(EnumType.STRING)
+	private ReportCategory reportCategory;
+
+	@Column(name = "IS_CUSTOM")
+	private boolean isCustom;
+
+	@Column(name = "IS_LEGAL")
+	private boolean isLegal;
+
+	/**
+	 * List of disclaimer witch may be used in conjunction with this template.
+	 */
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "TEMPLATE_DISCLAIMERS", joinColumns = { @JoinColumn(name = Template.TABLE_NAME) }, inverseJoinColumns = { @JoinColumn(name = "DISCLAIMERS") })
+	private List<Disclaimer> disclaimers;
+
+	@OneToMany
+	@JoinTable(name = "TEMPLATE_RULES", joinColumns = { @JoinColumn(name = Template.TABLE_NAME) }, inverseJoinColumns = { @JoinColumn(name = "RULES") })
+	@OrderBy(value = "executionOrder ASC")
+	private List<VerificationRule> rules;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "PRODUCT_TYPE_WRAPPER")
+	private ProductType productType;
+
+	@ElementCollection(fetch = FetchType.EAGER)
+	@JoinTable(name = "TEMPLATE_FILE_FORMATS")
+	@JoinColumn(name = Template.TABLE_NAME)
+	@Enumerated(EnumType.STRING)
+	private Set<FileFormat> fileFormats;
+
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "TEMPLATE_MESSAGES", joinColumns = { @JoinColumn(name = Template.TABLE_NAME, nullable = false, updatable = false) }, inverseJoinColumns = {
+			@JoinColumn(name = "KEY1", nullable = false, insertable = false, updatable = false),
+			@JoinColumn(name = "KEY2", nullable = false, insertable = false, updatable = false) })
+	private List<Message> messages;
+
+	/**
+	 * List of grids shown by the report.
+	 */
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "TEMPLATE_GRIDS", joinColumns = { @JoinColumn(name = Template.TABLE_NAME) }, inverseJoinColumns = { @JoinColumn(name = "GRIDS") })
+	private Set<TemplateGrid> grids;
+
+	/**
+	 * Default constructor should only be used by the exporter. Use
+	 * {@link #CustomTemplate(String)} to construct a {@link CustomTemplate}
+	 * with a given name used as its primary key.
+	 */
+	public Template() {
+	}
+
+	/**
+	 * Create a {@link Template} entity and set its name attribute. Will also
+	 * set its id as the name is used as the primary key.
+	 * 
+	 * @param name
+	 *            Name of the template.
+	 */
+	public Template(final String name) {
+		this.id = new TemplateId(name);
+		this.name = name;
+	}
+
+	@Override
+	public TemplateId getId() {
+		return this.id;
+	}
+
+	/**
+	 * Setting the id will also set the {@link #name} attribute used as the
+	 * primary key.
+	 */
+	public void setId(final TemplateId id) {
+		this.id = id;
+		this.name = id.getValue();
+	}
+
+	/**
+	 * Return the Template specification with theirs loaded rules.
+	 * 
+	 * @param id
+	 *            the Template id to load.
+	 * 
+	 * @return the founded Template.
+	 */
+	protected List<Template> loadWithOnlyRules(final TemplateId id) {
+		return this.entityManager.createNamedQuery(Template.LOAD_TEMPLATE_RULES).setParameter("id", id).getResultList();
+	}
+
+	public ReportCategory getReportCategory() {
+		return this.reportCategory;
+	}
+
+	public void setReportCategory(final ReportCategory reportCategory) {
+		this.reportCategory = reportCategory;
+	}
+
+	/**
+	 * Return the Custom Template .
+	 * 
+	 * @param reportType
+	 *            the reportType need to get template.
+	 * 
+	 * @return the founded Template.
+	 */
+	public Template findTemplateByReportType(final ReportType reportType) {
+		final List<Template> templates = this.entityManager
+				.createNamedQuery(Template.LOAD_CUSTOM_TEMPLATE_BY_REPORTTYPE).setParameter("reportType", reportType)
+				.getResultList();
+		return templates.isEmpty() ? null : (Template) templates.get(0);
+	}
+
+	public String getActionName() {
+		return this.actionName;
+	}
+
+	public void setActionName(final String actionName) {
+		this.actionName = actionName;
+	}
+
+	public String getFileName() {
+		return this.fileName;
+	}
+
+	public void setFileName(final String fileName) {
+		this.fileName = fileName;
+	}
+
+	public ReportType getReportType() {
+		return this.reportType;
+	}
+
+	public void setReportType(final ReportType reportType) {
+		this.reportType = reportType;
+	}
+
+	/**
+	 * Gets the disclaimers associated to the template.
+	 */
+	public List<Disclaimer> getDisclaimers() {
+		return Collections.unmodifiableList(this.disclaimers);
+	}
+
+	/**
+	 * Associates a disclaimer to the template.
+	 * 
+	 * @param disclaimer
+	 *            the disclaimer to add.
+	 */
+	public void addDisclaimer(final Disclaimer disclaimer) {
+		if (!this.disclaimers.contains(disclaimer)) {
+			this.disclaimers.add(disclaimer);
+		}
+	}
+
+	/**
+	 * Create method.
+	 * 
+	 * @return A new template.
+	 */
+	public static Template create() {
+		final Template template = new Template();
+		template.disclaimers = new ArrayList<Disclaimer>();
+		template.grids = new HashSet<TemplateGrid>();
+		template.rules = new ArrayList<VerificationRule>();
+		template.messages = new ArrayList<Message>();
+		template.fileFormats = new HashSet<FileFormat>();
+		return template;
+	}
+
+	public ProductType getProductType() {
+		return this.productType;
+	}
+
+	public void setProductType(final ProductType productType) {
+		this.productType = productType;
+	}
+
+	/**
+	 * Returns the list of formats the template is able to present.
+	 */
+	public Collection<FileFormat> getFileFormats() {
+		return Collections.unmodifiableCollection(this.fileFormats);
+	}
+
+	/**
+	 * Associates a product type to the template.
+	 */
+	public void addFileFormat(final FileFormat fileFormat) {
+		if (!this.fileFormats.contains(fileFormat)) {
+			this.fileFormats.add(fileFormat);
+		}
+	}
+
+	/**
+	 * Gets the grids associated to the template.
+	 */
+	public Set<TemplateGrid> getGrids() {
+		return Collections.unmodifiableSet(this.grids);
+	}
+
+	/**
+	 * Associates a grid to the template.
+	 * 
+	 * @param grid
+	 *            the grid to add.
+	 */
+	public void addGrid(final TemplateGrid grid) {
+		if (!this.grids.contains(grid)) {
+			this.grids.add(grid);
+		}
+	}
+
+	/**
+	 * Removes a grid from the template.
+	 * 
+	 * @param grid
+	 *            the grid to remove.
+	 */
+	public void removeGrid(final TemplateGrid grid) {
+		if (this.grids.contains(grid)) {
+			this.grids.remove(grid);
+		}
+	}
+
+	/**
+	 * Gets the rules associated to the template.
+	 */
+	public List<VerificationRule> getRules() {
+		return Collections.unmodifiableList(this.rules);
+	}
+
+	/**
+	 * Associates a rule to the template.
+	 * 
+	 * @param rule
+	 *            the rule to add.
+	 */
+	public void addRule(final VerificationRule rule) {
+		if (!this.rules.contains(rule)) {
+			this.rules.add(rule);
+		}
+	}
+
+	/**
+	 * Removes a rule from the template.
+	 * 
+	 * @param rule
+	 *            the rule to remove.
+	 */
+	public void removeRule(final VerificationRule rule) {
+		if (this.rules.contains(rule)) {
+			this.rules.remove(rule);
+		}
+	}
+
+	/**
+	 * Remove all the rules from the template.
+	 */
+	public void clearRules() {
+		this.rules.clear();
+	}
+
+	public List<Message> getMessages() {
+		return Collections.unmodifiableList(this.messages);
+	}
+
+	public void addMessage(final Message message) {
+		if (!this.messages.contains(message)) {
+			this.messages.add(message);
+		}
+	}
+
+	public void removeMessage(final Message message) {
+		if (this.messages.contains(message)) {
+			this.messages.remove(message);
+		}
+	}
+
+	/**
+	 * Gets the report disclamer associated to this template which is written in
+	 * the given locale.
+	 * 
+	 * @param locale
+	 *            to use.
+	 */
+	public Disclaimer getDisclaimerByLocale(final Locale locale) {
+		Disclaimer returnedDisclaimer = null;
+
+		for (final Disclaimer disclaimer : this.disclaimers) {
+			if (disclaimer.getLocale().equals(locale)) {
+				returnedDisclaimer = disclaimer;
+				break;
+			}
+		}
+
+		if (returnedDisclaimer == null && Locale.DEFAULT_LOCALE != locale) {
+			LOG.warn("No disclaimer found for this language: {}", locale.getIsoCodeLanguage());
+			returnedDisclaimer = getDisclaimerByLocale(Locale.DEFAULT_LOCALE);
+		}
+
+		if (returnedDisclaimer == null) {
+			returnedDisclaimer = Disclaimer.create();
+			final String warnMessage = "No disclaimer found for this language " + locale.getIsoCodeLanguage()
+					+ " nor disclaimer for the default language " + Locale.DEFAULT_LOCALE.getIsoCodeLanguage();
+			LOG.warn(warnMessage);
+			returnedDisclaimer.setText(warnMessage);
+		}
+
+		return returnedDisclaimer;
+	}
+
+	/**
+	 * Creates a template parameterization that is aligned with this template.
+	 * 
+	 * @param templParam
+	 *            a name for the template parametrization to create.
+	 * @return the template parametrization created.
+	 */
+	public TemplateParametrization createParametrization(final String templParam) {
+		final TemplateParametrization templateParametrization = TemplateParametrization.create();
+		templateParametrization.setId(templParam);
+		templateParametrization.setTemplate(this);
+		for (final TemplateGrid grid : this.grids) {
+			templateParametrization.addGrid(grid.createParametrization(templParam));
+		}
+		return templateParametrization;
+	}
+
+	/**
+	 * @return the name
+	 */
+	public String getName() {
+		return this.name;
+	}
+
+	public boolean isCustom() {
+		return this.isCustom;
+	}
+
+	public void setCustom(final boolean isCustom) {
+		this.isCustom = isCustom;
+	}
+
+	public boolean isLegal() {
+		return this.isLegal;
+	}
+
+	public void setLegal(final boolean isLegal) {
+		this.isLegal = isLegal;
+	}
+
+	/**
+	 * Load a template and its related {@link TemplateGrid}s and
+	 * {@link TemplateColumn}s.
+	 * 
+	 * @param id
+	 *            Id of the template to load.
+	 * @return the template loaded.
+	 */
+	public Template loadTemplate(final TemplateId id) {
+		final Template result = this.entityManager.createNamedQuery(LOAD_TEMPLATE_GRIDS, Template.class) //
+				.setParameter("id", id) //
+				.getSingleResult();
+
+		this.entityManager.createNamedQuery(LOAD_TEMPLATE_COLUMNS) //
+				.setParameter("id", id) //
+				.getSingleResult();
+
+		return result;
+	}
+
+	/**
+	 * @return all the templates found in database.
+	 */
+	public List<Template> getAll() {
+		final List<Template> result = this.entityManager.createNamedQuery(GET_ALL, Template.class) //
+				.getResultList();
+
+		return result;
+	}
+
+}

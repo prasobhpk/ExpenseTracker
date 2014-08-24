@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<xml-bindings package-name="com.pk.et.exp.model"
+	xmlns="http://www.eclipse.org/eclipselink/xsds/persistence/oxm"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.3">
+	<java-types>
+		<java-type name="Expense" xml-accessor-type="PROPERTY">
+			<java-attributes>
+				<xml-transient java-attribute="userExpense" />
+<!-- 				<xml-transient java-attribute="expenseType" /> -->
+				<xml-element   java-attribute="expDate">
+                    <xml-java-type-adapter value="com.pk.et.infra.jaxb.LocalDateAdapter"/>
+                </xml-element>
+                
+                <!-- 				<xml-inverse-reference mapped-by="phoneNumbers" -->
+<!-- 					java-attribute="employee" /> -->
+
+			</java-attributes>
+		</java-type>
+		
+		<java-type name="ExpenseType" xml-accessor-type="NONE">
+			<xml-root-element />
+			<!-- <xml-virtual-access-methods schema="NODES"/> -->
+			<java-attributes>
+				<xml-attribute java-attribute="id" />
+				<xml-element java-attribute="type" nillable="true" />
+				<xml-element java-attribute="description" nillable="true" />
+				<xml-element java-attribute="showInDashboard" nillable="true" />
+			</java-attributes>
+		</java-type>
+	</java-types>
+</xml-bindings>

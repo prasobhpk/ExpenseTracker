@@ -1,0 +1,25 @@
+package sgcib.clips.reporting.custom;
+
+import sgcib.clips.domain.TemplateColumn;
+import sgcib.clips.domain.TemplateColumnDataMapping;
+import sgcib.clips.shared.domain.ProductType;
+
+/**
+ * Accessor to a dataMapping in based on a {@link ProductType} and
+ * {@link TemplateColumn}
+ * 
+ */
+public class CustomTempateDataMappingAccesor implements TemplateColumnDataMappingAccessor {
+
+	private final ProductType productType;
+
+	public CustomTempateDataMappingAccesor(final ProductType productType) {
+		this.productType = productType;
+	}
+
+	@Override
+	public TemplateColumnDataMapping getDataMapping(final TemplateColumn templateColumn) {
+		return templateColumn.retrieveATemplateColumnDataMappingForAGivenProductType(this.productType);
+	}
+
+}

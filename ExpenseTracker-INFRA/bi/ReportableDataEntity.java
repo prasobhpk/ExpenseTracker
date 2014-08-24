@@ -1,0 +1,75 @@
+package com.pk.et.infra.bi;
+
+
+/**
+ * ReportableDataEntity
+ * 
+ */
+public enum ReportableDataEntity {
+	PRODUCT {
+		@Override
+		public <RETURN_TYPE, PARAM_TYPE> RETURN_TYPE accept(
+				final ReportableDataEntityVisitor<RETURN_TYPE, PARAM_TYPE> visitor,
+				final PARAM_TYPE parameter) {
+			return visitor.visitProduct(this, parameter);
+		}
+	},
+	POSITION {
+		@Override
+		public <RETURN_TYPE, PARAM_TYPE> RETURN_TYPE accept(
+				final ReportableDataEntityVisitor<RETURN_TYPE, PARAM_TYPE> visitor,
+				final PARAM_TYPE parameter) {
+			return visitor.visitPosition(this, parameter);
+		}
+	},
+	MARK_TO_MARKET {
+		@Override
+		public <RETURN_TYPE, PARAM_TYPE> RETURN_TYPE accept(
+				final ReportableDataEntityVisitor<RETURN_TYPE, PARAM_TYPE> visitor,
+				final PARAM_TYPE parameter) {
+			return visitor.visitMarkToMarker(this, parameter);
+		}
+	},
+	PRODUCT_PRICE {
+		@Override
+		public <RETURN_TYPE, PARAM_TYPE> RETURN_TYPE accept(
+				final ReportableDataEntityVisitor<RETURN_TYPE, PARAM_TYPE> visitor,
+				final PARAM_TYPE parameter) {
+			return visitor.visitProductPrice(this, parameter);
+		}
+	},
+	TRADES {
+		@Override
+		public <RETURN_TYPE, PARAM_TYPE> RETURN_TYPE accept(
+				final ReportableDataEntityVisitor<RETURN_TYPE, PARAM_TYPE> visitor,
+				final PARAM_TYPE parameter) {
+			return visitor.visitTrades(this, parameter);
+		}
+	},
+	PRD_UNDRL_PRICING_PARAM {
+		@Override
+		public <RETURN_TYPE, PARAM_TYPE> RETURN_TYPE accept(
+				final ReportableDataEntityVisitor<RETURN_TYPE, PARAM_TYPE> visitor,
+				final PARAM_TYPE parameter) {
+			return visitor.visitProductUnderlyingPricingParameter(this,
+					parameter);
+		}
+	},
+	UNDERLYINGS {
+		@Override
+		public <RETURN_TYPE, PARAM_TYPE> RETURN_TYPE accept(
+				final ReportableDataEntityVisitor<RETURN_TYPE, PARAM_TYPE> visitor,
+				final PARAM_TYPE parameter) {
+			return visitor.visitUnderlyings(this, parameter);
+		}
+	};
+
+	public abstract <RETURN_TYPE, PARAM_TYPE> RETURN_TYPE accept(
+			final ReportableDataEntityVisitor<RETURN_TYPE, PARAM_TYPE> visitor,
+			PARAM_TYPE parameter);
+
+	public <RETURN_TYPE, PARAM_TYPE> RETURN_TYPE accept(
+			final ReportableDataEntityVisitor<RETURN_TYPE, PARAM_TYPE> visitor) {
+		return accept(visitor, null);
+	}
+}

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+           http://www.springframework.org/schema/security
+           http://www.springframework.org/schema/security/spring-security.xsd">
+
+	<!-- 	
+	<util:properties id="roleUrlMap" location="classpath:roleUrlMap.properties"/>
+	
+	<beans:bean id="securityManager" class="org.mockito.Mockito" factory-method="mock">
+		<beans:constructor-arg value="com.pk.et.infra.security.SecurityManager" />
+	</beans:bean> 
+	
+	<beans:bean id="etAuthenticationProvider" class="org.mockito.Mockito" factory-method="mock">
+		<beans:constructor-arg value="com.pk.et.infra.security.ETDaoAuthenticationProvider" />
+	</beans:bean>
+	
+	<beans:bean id="passwordEncoder" class="org.mockito.Mockito" factory-method="mock">
+		<beans:constructor-arg value="org.springframework.security.authentication.encoding.ShaPasswordEncoder" />
+	</beans:bean>
+	
+	<beans:bean id="saltSource" class="org.mockito.Mockito" factory-method="mock">
+		<beans:constructor-arg value="org.springframework.security.authentication.dao.ReflectionSaltSource" />
+	</beans:bean>
+	
+	 -->
+	
+</beans:beans>

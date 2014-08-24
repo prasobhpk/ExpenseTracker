@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.pk.et</groupId>
+		<artifactId>ExpenseTracker</artifactId>
+		<version>1.0</version>
+	</parent>
+	<artifactId>ExpenseTracker-MTMFeeder</artifactId>
+	<packaging>war</packaging>
+	<dependencies>
+		<dependency>
+			<groupId>com.pk.et</groupId>
+			<artifactId>ExpenseTracker-INFRA</artifactId>
+			<version>1.0</version>
+		</dependency>
+
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>${antrun-plugin.version}</version>
+				<executions>
+					<!--
+					<execution>
+						<id>deploy</id>
+						<phase>install</phase>
+						<configuration>
+							<target>
+								<property name="TOMCAT_HOME" value="${TOMCAT_HOME}" />
+								<property name="war.name" value="${war.name}" />
+								<ant antfile="${basedir}/build.xml">
+									<target name="deploy-tomcat" />
+								</ant>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					-->
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>2.1.1</version>
+				<executions>
+					<execution>
+						<id>default-war</id>
+						<phase>package</phase>
+						<goals>
+							<goal>war</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<warName>${war.name}</warName>
+					<!-- <outputDirectory>${TOMCAT_HOME}/webapps</outputDirectory> -->
+					<webResources>
+						<!-- <resource> -->
+						<!-- <targetPath>WEB-INF</targetPath> -->
+						<!-- <directory>src/main/resources</directory> -->
+						<!-- </resource> -->
+						<resource>
+							<directory>${webArtifacts.dir}</directory>
+						</resource>
+					</webResources>
+				</configuration>
+			</plugin>
+			<plugin>
+		        <groupId>org.bsc.maven</groupId>
+				<artifactId>maven-processor-plugin</artifactId>
+		    </plugin>
+		    <plugin>
+		        <groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+		    </plugin>
+		</plugins>
+	</build>
+	<properties>
+		<war.name>mtmfeeder</war.name>
+		<TOMCAT_HOME>D:\DEV_TOOLS\servers\tomcat\dev1</TOMCAT_HOME>
+	</properties>
+</project>

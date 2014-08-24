@@ -1,0 +1,30 @@
+package sgcib.clips.reporting;
+
+import org.eclipse.birt.report.engine.api.script.IReportContext;
+import org.eclipse.birt.report.engine.api.script.ScriptException;
+import org.eclipse.birt.report.engine.api.script.eventadapter.ScriptedDataSourceEventAdapter;
+import org.eclipse.birt.report.engine.api.script.instance.IDataSourceInstance;
+
+/**
+ * Basic datasource handler for birt report datasources that delegates to
+ * {@link ReportAction}
+ */
+public class ClipsDataSourceEventHandler extends ScriptedDataSourceEventAdapter {
+
+	@Override
+	public void open(final IDataSourceInstance dataSource) throws ScriptException {
+		getReportAction().openDataSource(dataSource);
+		super.open(dataSource);
+	}
+
+	@Override
+	public void afterOpen(final IDataSourceInstance dataSource, final IReportContext reportContext)
+			throws ScriptException {
+		getReportAction().afterOpenDatasource(dataSource, reportContext);
+		super.afterOpen(dataSource, reportContext);
+	}
+
+	protected BasicReportActionImpl getReportAction() {
+		return (BasicReportActionImpl) ActionManager.getCurrentAction();
+	}
+}

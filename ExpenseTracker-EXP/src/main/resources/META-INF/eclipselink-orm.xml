@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings version="2.3"
+	xmlns="http://www.eclipse.org/eclipselink/xsds/persistence/orm"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.eclipse.org/eclipselink/xsds/persistence/orm http://www.eclipse.org/eclipselink/xsds/eclipselink_orm_2_3.xsd">
+	<!-- <table-generator name="_GEN" table="ID_GEN" pk-column-name="ID_NAME" 
+		value-column-name="ID_VAL" pk-column-value="_SEQ" allocation-size="100" /> -->
+
+	<table-generator name="EXP_TYPE_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="EXP_TYPE_SEQ"
+		allocation-size="100" />
+
+	<table-generator name="EXP_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="EMP_SEQ"
+		allocation-size="500" />
+
+	<table-generator name="USER_EXP_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="USER_EXP_SEQ"
+		allocation-size="100" />
+
+	<table-generator name="FORECAST_GEN" table="ID_GEN"
+		pk-column-name="ID_NAME" value-column-name="ID_VAL" pk-column-value="FORECAST_SEQ"
+		allocation-size="100" />
+</entity-mappings>

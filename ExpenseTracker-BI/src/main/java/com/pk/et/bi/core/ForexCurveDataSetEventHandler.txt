@@ -1,0 +1,36 @@
+package sgcib.clips.reporting.custom;
+
+import java.util.List;
+
+import org.eclipse.birt.report.engine.api.script.IReportContext;
+import org.eclipse.birt.report.engine.api.script.IUpdatableDataSetRow;
+import org.eclipse.birt.report.engine.api.script.ScriptException;
+import org.eclipse.birt.report.engine.api.script.instance.IDataSetInstance;
+
+import sgcib.clips.reporting.ClipsDataSetEventHandler;
+
+/**
+ * An adapter used by the dataset for Forex curve table.
+ * 
+ */
+public class ForexCurveDataSetEventHandler extends ClipsDataSetEventHandler<ForexCurveDataRow> {
+
+	/**
+	 * Retrieve all the data rows in order to fill the dataset.
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public void beforeOpen(final IDataSetInstance dataSet, final IReportContext reportContext) throws ScriptException {
+		this.dataRows = (List<ForexCurveDataRow>) reportContext
+				.getGlobalVariable(CustomReportAction.FOREX_CURVE_DATA_ROWS);
+	}
+
+	/**
+	 * Fill a row with the corresponding values.
+	 */
+	@Override
+	protected void updateRow(final IUpdatableDataSetRow row, final ForexCurveDataRow datarow) throws ScriptException {
+		row.setColumnValue("Currencies", datarow.getCurrencies());
+		row.setColumnValue("ForexRate", datarow.getForexRate());
+	}
+}

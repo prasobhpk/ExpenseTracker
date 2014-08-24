@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+	
+	<!-- Scans for application @Components to deploy -->
+	<context:component-scan base-package="com.pk.et" />
+	<import resource="ExpenseTracker-INFRA-properties.xml" />
+	<import resource="ExpenseTracker-INFRA-core.xml" />
+	<import resource="ExpenseTracker-INFRA-repository.xml" />
+	<import resource="ExpenseTracker-INFRA-security.xml" />
+	<import resource="ExpenseTracker-INFRA-rest.xml" />
+	<import resource="ExpenseTracker-INFRA-mvc.xml" />
+	<import resource="ExpenseTracker-INFRA-jms.xml" />
+
+</beans>

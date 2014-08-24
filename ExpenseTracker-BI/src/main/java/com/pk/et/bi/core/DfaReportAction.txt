@@ -1,0 +1,56 @@
+package sgcib.clips.reporting;
+
+import java.math.BigDecimal;
+
+import sgcib.clips.domain.MarkToMarket;
+import sgcib.clips.domain.Position;
+
+/**
+ * This class stores datas and methods dedicated to DFA.
+ */
+public abstract class DfaReportAction extends ReportActionImpl {
+
+	/**
+	 * A boolean to know whether the report has some DFA data or not.
+	 */
+	protected boolean reportWithDfaData;
+
+	/**
+	 * Return the mid DFA. If the position is DFA, we return the mid DFA, if the
+	 * mid DFA is null we return the mid mtm. If the position is not DFA, we
+	 * return null.
+	 * 
+	 * @param position
+	 *            the position to consider.
+	 * @return the mid DFA.
+	 */
+	protected BigDecimal getMidDfa(final Position position) {
+		BigDecimal midDfa = null;
+		if (position.isDfaEligible()) {
+			this.reportWithDfaData = true;
+			final MarkToMarket mtm = position.getMarkToMarketForReport();
+			if (mtm != null) {
+				midDfa = mtm.getGrossMidMTM();
+				if (midDfa == null) {
+					midDfa = mtm.getMidMTM();
+				}
+			}
+		}
+		return midDfa;
+	}
+
+	/**
+	 * @return a boolean to know whether the report has some DFA data or not.
+	 */
+	public boolean isReportWithDfaData() {
+		return this.reportWithDfaData;
+	}
+
+	/**
+	 * @return a boolean to know whether we have to hide the DFA data in the
+	 *         report or not.
+	 */
+	public boolean hideDfaData() {
+		return !isReportWithDfaData();
+	}
+}
